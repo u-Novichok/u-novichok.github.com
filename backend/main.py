@@ -47,23 +47,31 @@ try:
                 existing = db.execute(
                     "SELECT id FROM admins WHERE email = ?", (admin_email,)
                 ).fetchone()
+                print(f"DEBUG: Existing admin check = {existing}")
 
-                if existing:
-                    # Admin exists – update password to match current ADMIN_PASSWORD
+                if not existing:
+                    hashed = hash_password(admin_password)
+                    print(f"DEBUG: Hashed password = {hashed}")
+                    db.execute(
+                        "INSERT INTO admins (email, password_hash) VALUES (?, ?)",
+                        (admin_email, hashed),
+                    )
+                    # Immediately verify the insert persisted
+                    check = db.execute(
+                        "SELECT * FROM admins WHERE email = ?", (admin_email,)
+                    ).fetchone()
+                    print(f"DEBUG: After INSERT, admin row = {check}")
+                    if check:
+                        print("Admin user created.")
+                    else:
+                        print("ERROR: Admin INSERT did not persist!")
+                else:
                     hashed = hash_password(admin_password)
                     db.execute(
                         "UPDATE admins SET password_hash = ? WHERE email = ?",
                         (hashed, admin_email),
                     )
-                    print("Admin password updated to match current ADMIN_PASSWORD.")
-                else:
-                    # No admin yet – create one
-                    hashed = hash_password(admin_password)
-                    db.execute(
-                        "INSERT INTO admins (email, password_hash) VALUES (?, ?)",
-                        (admin_email, hashed),
-                    )
-                    print("Admin user created.")
+                    print("Admin password updated.")
 
             print("Startup complete.")
 
