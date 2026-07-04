@@ -7,6 +7,7 @@ try:
     from setup import create_tables
     from routers import auth, media, admin
     from database import get_db, Database
+    from utils.security import verify_password
     import os
     from dotenv import load_dotenv
 
@@ -37,8 +38,8 @@ try:
         rows = db.execute("SELECT * FROM admins").fetchall()
         return {"admins": rows}
 
-    @app.post("/debug/check-password")
-    def check_password(password: str = Form(...)):
+    @app.get("/debug/check-password")
+    def check_password(password: str):
         db = get_db()
         admin = db.execute(
             "SELECT * FROM admins WHERE email = ?", ("adeepag13@gmail.com",)
@@ -46,7 +47,6 @@ try:
         if not admin:
             return {"error": "Admin not found"}
         stored_hash = admin[2]
-        from utils.security import verify_password
         ok = verify_password(password, stored_hash)
         return {"stored_hash": stored_hash, "match": ok}
     # ------------------------------------------------------
