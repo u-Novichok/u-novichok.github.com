@@ -2,12 +2,11 @@ import sys
 import traceback
 
 try:
-    from fastapi import FastAPI, Form
+    from fastapi import FastAPI
     from fastapi.middleware.cors import CORSMiddleware
     from setup import create_tables
     from routers import auth, media, admin
     from database import get_db, Database
-    from utils.security import verify_password
     import os
     from dotenv import load_dotenv
 
@@ -15,7 +14,6 @@ try:
 
     app = FastAPI(title="Novichok API")
 
-    # CORS
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -32,21 +30,26 @@ try:
     def root():
         return {"status": "ok", "service": "Novichok API"}
 
-    # Temporary debug endpoint – REMOVE AFTER TESTING
+    # --- TEMPORARY DEBUG ENDPOINTS (remove after use) ---
+    @app.get("/debug/list-admins")
+    def list_admins():
+        db = get_db()
+        rows = db.execute("SELECT * FROM admins").fetchall()
+        return {"admins": rows}
+
     @app.post("/debug/check-password")
-    def debug_check_password(password: str = Form(...)):
+    def check_password(password: str = Form(...)):
         db = get_db()
         admin = db.execute(
             "SELECT * FROM admins WHERE email = ?", ("adeepag13@gmail.com",)
         ).fetchone()
         if not admin:
-            return {"error": "Admin not found in database"}
+            return {"error": "Admin not found"}
         stored_hash = admin[2]
-        is_match = verify_password(password, stored_hash)
-        return {
-            "stored_hash": stored_hash,
-            "password_check": is_match,
-        }
+        from utils.security import verify_password
+        ok = verify_password(password, stored_hash)
+        return {"stored_hash": stored_hash, "match": ok}
+    # ------------------------------------------------------
 
     @app.on_event("startup")
     def startup():
