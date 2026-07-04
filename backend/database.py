@@ -12,9 +12,9 @@ TURSO_TOKEN = os.getenv("TURSO_AUTH_TOKEN")
 if not TURSO_URL or not TURSO_TOKEN:
     raise Exception("Turso environment variables not set.")
 
-# Connect to Turso using the sqlalchemy-turso dialect
+# Use the libsql dialect with the auth token as a query parameter
 engine = create_engine(
-    f"sqlite+{TURSO_URL}/?authToken={TURSO_TOKEN}",
+    f"libsql://{TURSO_URL}/?authToken={TURSO_TOKEN}",
     connect_args={"check_same_thread": False},
 )
 
