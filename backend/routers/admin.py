@@ -1,10 +1,8 @@
 from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException
-from database import SessionLocal
-from models import Media
-from schemas import MediaUpdate
+from database import get_db
 from utils.cloudinary_upload import upload_image, delete_image
 from utils.security import get_current_admin
-from sqlalchemy.orm import Session
+from schemas import MediaUpdate
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -18,71 +16,48 @@ async def upload_media(
     admin = Depends(get_current_admin)
 ):
     contents = await file.read()
-    # Validate file type
     if not file.content_type.startswith("image/"):
         raise HTTPException(400, "Only image files are allowed")
-    try:
-        public_id, secure_url = upload_image(contents, folder="novichok")
-    except Exception as e:
-        raise HTTPException(500, f"Cloudinary upload failed: {str(e)}")
-
-    db = SessionLocal()
-    media = Media(
-        title=title,
-        description=description,
-        category=category,
-        tags=tags,
-        media_type="image",
-        cloudinary_public_id=public_id,
-        cloudinary_url=secure_url,
+    public_id, secure_url = upload_image(contents, folder="novichok")
+    db = get_db()
+    db.execute(
+        "INSERT INTO media (title, description, category, tags, media_type, cloudinary_public_id, cloudinary_url) VALUES (?,?,?,?,?,?,?)",
+        (title, description, category, tags, "image", public_id, secure_url)
     )
-    db.add(media)
-    db.commit()
-    db.refresh(media)
-    db.close()
-    return {"id": media.id, "url": secure_url}
+    last_id = db.last_row_id
+    return {"id": last_id, "url": secure_url}
 
 @router.put("/media/{id}")
 def update_media(id: int, update: MediaUpdate, admin = Depends(get_current_admin)):
-    db = SessionLocal()
-    media = db.query(Media).filter(Media.id == id).first()
-    if not media:
-        db.close()
+    db = get_db()
+    existing = db.execute("SELECT * FROM media WHERE id = ?", (id,)).fetchone()
+    if not existing:
         raise HTTPException(404, "Media not found")
     update_data = update.dict(exclude_unset=True)
-    for key, value in update_data.items():
-        setattr(media, key, value)
-    db.commit()
-    db.refresh(media)
-    db.close()
+    set_clause = ", ".join(f"{k} = ?" for k in update_data.keys())
+    values = list(update_data.values()) + [id]
+    db.execute(f"UPDATE media SET {set_clause} WHERE id = ?", values)
     return {"message": "Updated", "id": id}
 
 @router.delete("/media/{id}")
 def delete_media(id: int, admin = Depends(get_current_admin)):
-    db = SessionLocal()
-    media = db.query(Media).filter(Media.id == id).first()
+    db = get_db()
+    media = db.execute("SELECT * FROM media WHERE id = ?", (id,)).fetchone()
     if not media:
-        db.close()
         raise HTTPException(404, "Media not found")
     # Delete from Cloudinary
     try:
-        delete_image(media.cloudinary_public_id)
+        delete_image(media[6])  # cloudinary_public_id
     except Exception:
-        # Log this, but continue to delete DB record
         pass
-    db.delete(media)
-    db.commit()
-    db.close()
+    db.execute("DELETE FROM media WHERE id = ?", (id,))
     return {"message": "Deleted", "id": id}
 
 @router.post("/download/{id}")
 def increment_download(id: int):
-    db = SessionLocal()
-    media = db.query(Media).filter(Media.id == id).first()
+    db = get_db()
+    media = db.execute("SELECT * FROM media WHERE id = ?", (id,)).fetchone()
     if not media:
-        db.close()
         raise HTTPException(404, "Media not found")
-    media.download_count = (media.download_count or 0) + 1
-    db.commit()
-    db.close()
-    return {"url": media.cloudinary_url, "download_count": media.download_count}
+    db.execute("UPDATE media SET download_count = download_count + 1 WHERE id = ?", (id,))
+    return {"url": media[7], "download_count": media[9] + 1}
