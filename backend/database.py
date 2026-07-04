@@ -1,5 +1,6 @@
 import os
 import requests
+import json
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -28,17 +29,22 @@ class Database:
             ]
         }
         try:
-            resp = requests.post(API_URL, json=payload, headers=HEADERS, timeout=10)
+            resp = requests.post(API_URL, json=payload, headers=HEADERS, timeout=15)
             resp.raise_for_status()
             data = resp.json()
-            self._last_result = data.get("results", [{}])[0]
+            # Save the full response for debugging
+            self._last_raw = data
+            results = data.get("results", [])
+            self._last_result = results[0] if results else {}
         except requests.exceptions.RequestException as e:
             raise Exception(f"Turso HTTP request failed: {e}")
         return self
 
     def fetchone(self):
+        # Extract first row from result set
         rows = self._last_result.get("response", {}).get("result", {}).get("rows", [])
         if rows:
+            # Each row is a list of columns: [{"type":"integer","value":"1"}]
             return tuple(col.get("value") for col in rows[0])
         return None
 
@@ -52,14 +58,17 @@ class Database:
 
     @staticmethod
     def test_connection():
-        """Quick test to verify the Turso API works."""
         db = Database()
         db.execute("SELECT 1")
+        # Print the raw response to logs
+        print("RAW TURSO RESPONSE:")
+        print(json.dumps(db._last_raw, indent=2))
         row = db.fetchone()
-        if row and row[0] == 1:
+        print(f"PARSED ROW: {row}")
+        if row and row[0] == "1":   # Note: value is a string "1", not integer 1
             print("Turso connection successful.")
         else:
-            raise Exception("Turso connection test returned unexpected result.")
+            raise Exception(f"Turso connection test failed. Parsed row: {row}")
 
 def get_db():
     return Database()
