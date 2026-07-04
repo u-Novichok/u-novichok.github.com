@@ -1,9 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from database import engine, Base, SessionLocal
-from models import Admin
-from utils.security import hash_password
+from setup import create_tables
 from routers import auth, media, admin
+from utils.security import hash_password
+from database import get_db
 import os
 from dotenv import load_dotenv
 
@@ -11,10 +11,9 @@ load_dotenv()
 
 app = FastAPI(title="Novichok API")
 
-# CORS – allow your GitHub Pages domain (or * for now)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],   # In production, restrict to your frontend URL
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -27,20 +26,17 @@ app.include_router(admin.router)
 
 @app.on_event("startup")
 def startup():
-    # Create tables
-    Base.metadata.create_all(bind=engine)
-
+    create_tables()
     # Seed admin user
-    db = SessionLocal()
+    db = get_db()
     admin_email = os.getenv("ADMIN_EMAIL")
     if admin_email:
-        existing = db.query(Admin).filter(Admin.email == admin_email).first()
+        existing = db.execute("SELECT id FROM admins WHERE email = ?", (admin_email,)).fetchone()
         if not existing:
             admin_password = os.getenv("ADMIN_PASSWORD", "changeme")
             hashed = hash_password(admin_password)
-            db.add(Admin(email=admin_email, password_hash=hashed, role="admin"))
-            db.commit()
-    db.close()
+            db.execute("INSERT INTO admins (email, password_hash) VALUES (?, ?)", (admin_email, hashed))
+            print("Admin user created.")
 
 @app.get("/")
 def root():
