@@ -14,9 +14,9 @@ security = HTTPBearer()
 
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
-
 def hash_password(password):
-    return pwd_context.hash(password)
+    # bcrypt limits passwords to 72 bytes
+    return pwd_context.hash(password[:72])
 
 def create_access_token(data: dict):
     to_encode = data.copy()
