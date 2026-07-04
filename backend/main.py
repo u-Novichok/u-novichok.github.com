@@ -15,6 +15,7 @@ try:
 
     app = FastAPI(title="Novichok API")
 
+    # CORS – allow your GitHub Pages frontend (or * for now)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -23,6 +24,7 @@ try:
         allow_headers=["*"],
     )
 
+    # Include route modules
     app.include_router(auth.router)
     app.include_router(media.router)
     app.include_router(admin.router)
@@ -36,16 +38,35 @@ try:
         try:
             Database.test_connection()
             create_tables()
+
             db = get_db()
             admin_email = os.getenv("ADMIN_EMAIL")
+            admin_password = os.getenv("ADMIN_PASSWORD", "changeme")
+
             if admin_email:
-                existing = db.execute("SELECT id FROM admins WHERE email = ?", (admin_email,)).fetchone()
-                if not existing:
-                    admin_password = os.getenv("ADMIN_PASSWORD", "changeme")
+                existing = db.execute(
+                    "SELECT id FROM admins WHERE email = ?", (admin_email,)
+                ).fetchone()
+
+                if existing:
+                    # Admin exists – update password to match current ADMIN_PASSWORD
                     hashed = hash_password(admin_password)
-                    db.execute("INSERT INTO admins (email, password_hash) VALUES (?, ?)", (admin_email, hashed))
+                    db.execute(
+                        "UPDATE admins SET password_hash = ? WHERE email = ?",
+                        (hashed, admin_email),
+                    )
+                    print("Admin password updated to match current ADMIN_PASSWORD.")
+                else:
+                    # No admin yet – create one
+                    hashed = hash_password(admin_password)
+                    db.execute(
+                        "INSERT INTO admins (email, password_hash) VALUES (?, ?)",
+                        (admin_email, hashed),
+                    )
                     print("Admin user created.")
+
             print("Startup complete.")
+
         except Exception as e:
             print("STARTUP ERROR:")
             traceback.print_exc()
