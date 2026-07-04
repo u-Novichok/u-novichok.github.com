@@ -3,6 +3,7 @@ from database import get_db
 from utils.cloudinary_upload import upload_image, delete_image
 from utils.security import get_current_admin
 from schemas import MediaUpdate
+import traceback
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -18,14 +19,31 @@ async def upload_media(
     contents = await file.read()
     if not file.content_type.startswith("image/"):
         raise HTTPException(400, "Only image files are allowed")
-    public_id, secure_url = upload_image(contents, folder="novichok")
-    db = get_db()
-    db.execute(
-        "INSERT INTO media (title, description, category, tags, media_type, cloudinary_public_id, cloudinary_url) VALUES (?,?,?,?,?,?,?)",
-        (title, description, category, tags, "image", public_id, secure_url)
-    )
-    last_id = db.last_row_id
-    return {"id": last_id, "url": secure_url}
+    try:
+        public_id, secure_url = upload_image(contents, folder="novichok")
+    except Exception as e:
+        raise HTTPException(500, f"Cloudinary upload failed: {str(e)}")
+
+    # Try to insert into Turso; if it fails, still return success
+    db_id = None
+    try:
+        db = get_db()
+        db.execute(
+            "INSERT INTO media (title, description, category, tags, media_type, cloudinary_public_id, cloudinary_url) VALUES (?,?,?,?,?,?,?)",
+            (title, description, category, tags, "image", public_id, secure_url)
+        )
+        db_id = db.last_row_id
+        print(f"Inserted media with id: {db_id}")
+    except Exception as e:
+        print("WARNING: Could not insert into Turso (writes disabled).")
+        traceback.print_exc()
+
+    return {
+        "id": db_id,
+        "url": secure_url,
+        "public_id": public_id,
+        "db_saved": db_id is not None
+    }
 
 @router.put("/media/{id}")
 def update_media(id: int, update: MediaUpdate, admin = Depends(get_current_admin)):
@@ -45,7 +63,6 @@ def delete_media(id: int, admin = Depends(get_current_admin)):
     media = db.execute("SELECT * FROM media WHERE id = ?", (id,)).fetchone()
     if not media:
         raise HTTPException(404, "Media not found")
-    # Delete from Cloudinary
     try:
         delete_image(media[6])  # cloudinary_public_id
     except Exception:
