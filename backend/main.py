@@ -6,7 +6,6 @@ try:
     from fastapi.middleware.cors import CORSMiddleware
     from setup import create_tables
     from routers import auth, media, admin
-    from utils.security import hash_password
     from database import get_db, Database
     import os
     from dotenv import load_dotenv
@@ -34,7 +33,7 @@ try:
         return {"status": "ok", "service": "Novichok API"}
 
     @app.on_event("startup")
-     def startup():
+    def startup():
         try:
             Database.test_connection()
             create_tables()
