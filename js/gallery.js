@@ -69,7 +69,7 @@ function updateTimestamp() {
 function startAutoRefresh() {
     // Clear any existing interval
     if (autoRefreshInterval) clearInterval(autoRefreshInterval);
-    autoRefreshInterval = setInterval(loadGallery, 30000); // 30 seconds
+    autoRefreshInterval = setInterval(loadGallery, 60000); // 30 seconds
 }
 
 // Stop auto-refresh when leaving the page
