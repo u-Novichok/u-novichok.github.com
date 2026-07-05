@@ -9,7 +9,8 @@ try:
     from database import get_db, Database
     import os
     from dotenv import load_dotenv
-
+    from routers import auth, media, admin, share
+    
     load_dotenv()
 
     app = FastAPI(title="Novichok API")
@@ -27,7 +28,8 @@ try:
     app.include_router(auth.router)
     app.include_router(media.router)
     app.include_router(admin.router)
-
+    app.include_router(share.router) 
+    
     @app.get("/")
     def root():
         return {"status": "ok", "service": "Novichok API"}
