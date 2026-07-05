@@ -64,9 +64,10 @@ function showDownloadPopup(imageUrl, title, callback) {
         if (e.target === overlay) overlay.remove();
     });
 
-    // "Copy Link" button – copies the page URL (not the direct image URL)
+    // "Copy Link" button – copies the social‑friendly share URL
     document.getElementById('popupCopyBtn').addEventListener('click', () => {
-        navigator.clipboard.writeText(window.location.href);
+        const shareUrl = `https://novichok-api.onrender.com/share/${imageId}`;
+        navigator.clipboard.writeText(shareUrl);
         const btn = document.getElementById('popupCopyBtn');
         btn.textContent = '✅ Copied!';
         setTimeout(() => {
@@ -129,9 +130,10 @@ async function loadDetail() {
             });
         });
 
-        // Copy Link button → copies the page URL
+        // Copy Link button → copies the social‑friendly share URL
         document.getElementById('copyLinkBtn').addEventListener('click', () => {
-            navigator.clipboard.writeText(window.location.href);
+            const shareUrl = `https://novichok-api.onrender.com/share/${imageId}`;
+            navigator.clipboard.writeText(shareUrl);
             const btn = document.getElementById('copyLinkBtn');
             btn.textContent = '✅ Copied!';
             setTimeout(() => { btn.textContent = 'Copy Link'; }, 2000);
