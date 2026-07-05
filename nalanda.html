@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,8 +7,9 @@
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <header class="site-header">
-        <span class="site-title">Novichok</span>
+
+    <header>
+        <h2>Novichok</h2>
     </header>
 
     <main class="main-container">
@@ -20,50 +20,13 @@
             <p class="page-subtitle">OSINT & Defence Image Library</p>
         </section>
 
-        <!-- Dynamic gallery container -->
+        <!-- Dynamic gallery grid – populated by gallery.js -->
         <div id="galleryGrid" class="gallery-grid">
             <p>Loading images…</p>
         </div>
     </main>
 
-    <script type="module">
-        import { fetchMedia } from './js/api.js';
-
-        async function loadGallery() {
-            const grid = document.getElementById('galleryGrid');
-            try {
-                const data = await fetchMedia({ category: '', limit: 24 });
-                const items = data.items || data; // supports both formats
-                if (!items || items.length === 0) {
-                    grid.innerHTML = '<p>No images found. Upload your first image via the admin panel.</p>';
-                    return;
-                }
-                grid.innerHTML = '';
-                items.forEach(img => {
-                    const card = document.createElement('article');
-                    card.className = 'gallery-card';
-                    card.innerHTML = `
-                        <a href="image.html?id=${img.id}" class="card-link">
-                            <div class="card-img-wrap">
-                                <img src="${img.cloudinary_url || img.thumbnail_url}" 
-                                     alt="${img.title}" 
-                                     loading="lazy" 
-                                     class="card-img">
-                            </div>
-                            <div class="card-body">
-                                <h3 class="card-title">${img.title}</h3>
-                                <p class="card-sub">${img.country || ''} • ${img.source || ''}</p>
-                            </div>
-                        </a>`;
-                    grid.appendChild(card);
-                });
-            } catch (err) {
-                grid.innerHTML = '<p>Could not load images. Please try again later.</p>';
-                console.error(err);
-            }
-        }
-
-        loadGallery();
-    </script>
+    <!-- Load the gallery script -->
+    <script type="module" src="js/gallery.js"></script>
 </body>
 </html>
