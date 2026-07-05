@@ -1,1 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Images — Novichok Admin</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f4f4f4;
+            padding: 30px 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: #fff;
+            border-radius: 12px;
+            padding: 30px;
+            border: 1px solid #d9d9d9;
+        }
+        h2 { margin-bottom: 20px; }
+        .image-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #eee;
+            padding: 12px 0;
+        }
+        .image-row img {
+            width: 80px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 6px;
+            margin-right: 15px;
+        }
+        .image-info { flex:1; }
+        .image-info h3 { font-size: 16px; margin-bottom: 4px; }
+        .image-info span { font-size: 14px; color: #666; }
+        .actions button {
+            margin-left: 10px;
+            padding: 6px 14px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .delete-btn { background: #e00; color: #fff; }
+        .delete-btn:hover { background: #c00; }
+        .message { margin-bottom: 20px; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Manage Images</h2>
+        <div id="msg" class="message"></div>
+        <div id="imageList">Loading...</div>
+        <p style="margin-top:20px;"><a href="dashboard.html">← Back to Dashboard</a></p>
+    </div>
 
+    <script>
+        const token = localStorage.getItem('admin_token');
+        if (!token) window.location.href = 'login.html';
+
+        async function loadImages() {
+            const listDiv = document.getElementById('imageList');
+            try {
+                const res = await fetch('https://novichok-api.onrender.com/media?limit=50', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const data = await res.json();
+                const items = data.items || data;
+                if (!items || items.length === 0) {
+                    listDiv.innerHTML = '<p>No images yet.</p>';
+                    return;
+                }
+                listDiv.innerHTML = '';
+                items.forEach(img => {
+                    const row = document.createElement('div');
+                    row.className = 'image-row';
+                    row.innerHTML = `
+                        <img src="${img.cloudinary_url}" alt="${img.title}">
+                        <div class="image-info">
+                            <h3>${img.title}</h3>
+                            <span>ID: ${img.id} | ${img.country || ''} • ${img.source || ''}</span>
+                        </div>
+                        <div class="actions">
+                            <button class="delete-btn" data-id="${img.id}">Delete</button>
+                        </div>
+                    `;
+                    listDiv.appendChild(row);
+                });
+
+                // Attach delete handlers
+                document.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const id = e.target.getAttribute('data-id');
+                        if (!confirm('Delete this image permanently?')) return;
+                        try {
+                            const delRes = await fetch(`https://novichok-api.onrender.com/admin/media/${id}`, {
+                                method: 'DELETE',
+                                headers: { 'Authorization': 'Bearer ' + token }
+                            });
+                            if (delRes.ok) {
+                                document.getElementById('msg').textContent = 'Image deleted.';
+                                document.getElementById('msg').className = 'message success';
+                                loadImages(); // refresh list
+                            } else {
+                                const err = await delRes.json();
+                                document.getElementById('msg').textContent = 'Error: ' + err.detail;
+                                document.getElementById('msg').className = 'message error';
+                            }
+                        } catch (err) {
+                            document.getElementById('msg').textContent = 'Network error.';
+                            document.getElementById('msg').className = 'message error';
+                        }
+                    });
+                });
+            } catch (err) {
+                listDiv.innerHTML = '<p>Failed to load images.</p>';
+            }
+        }
+
+        loadImages();
+    </script>
+</body>
+</html>
