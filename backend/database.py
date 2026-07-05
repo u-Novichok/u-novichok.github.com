@@ -5,81 +5,69 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-TURSO_URL = os.getenv("TURSO_DATABASE_URL", "")
-TURSO_TOKEN = os.getenv("TURSO_AUTH_TOKEN", "")
+CF_ACCOUNT_ID = os.getenv("CF_ACCOUNT_ID")
+CF_DATABASE_ID = os.getenv("CF_DATABASE_ID")
+CF_API_TOKEN = os.getenv("CF_API_TOKEN")
 
-if not TURSO_URL or not TURSO_TOKEN:
-    raise Exception("Missing TURSO_DATABASE_URL or TURSO_AUTH_TOKEN environment variable.")
+if not all([CF_ACCOUNT_ID, CF_DATABASE_ID, CF_API_TOKEN]):
+    raise Exception("Missing Cloudflare D1 environment variables.")
 
-base = TURSO_URL.replace("libsql://", "https://")
-API_URL = f"{base}/v2/pipeline"
+API_URL = f"https://api.cloudflare.com/client/v4/accounts/{CF_ACCOUNT_ID}/d1/database/{CF_DATABASE_ID}/query"
 HEADERS = {
-    "Authorization": f"Bearer {TURSO_TOKEN}",
+    "Authorization": f"Bearer {CF_API_TOKEN}",
     "Content-Type": "application/json"
 }
 
 class Database:
     def __init__(self):
         self._last_result = {}
-        self._last_raw = {}
 
     def execute(self, sql, params=None):
-        payload = {
-            "requests": [
-                {"type": "execute", "stmt": {"sql": sql}, "params": params or []}
-            ]
-        }
+        body = {"sql": sql}
+        if params:
+            body["params"] = params
         try:
-            resp = requests.post(API_URL, json=payload, headers=HEADERS, timeout=15)
+            resp = requests.post(API_URL, json=body, headers=HEADERS, timeout=15)
             resp.raise_for_status()
             data = resp.json()
-            self._last_raw = data
-            results = data.get("results", [])
-            self._last_result = results[0] if results else {}
-
-            # Check for Turso-level error
-            if self._last_result.get("type") == "error":
-                error_msg = self._last_result.get("response", {}).get("error", "Unknown Turso error")
-                raise Exception(f"Turso query error: {error_msg}")
-
-            # Print raw response for write operations
-            if not sql.strip().upper().startswith("SELECT"):
-                print("RAW WRITE RESPONSE:")
-                print(json.dumps(data, indent=2))
-                affected = self._last_result.get("response", {}).get("result", {}).get("affected_row_count")
-                last_id = self._last_result.get("response", {}).get("result", {}).get("last_insert_rowid")
-                print(f"Rows affected: {affected}, Last insert ID: {last_id}")
-
+            if not data.get("success"):
+                raise Exception(f"D1 query failed: {data.get('errors')}")
+            self._last_result = data
         except requests.exceptions.RequestException as e:
-            raise Exception(f"Turso HTTP request failed: {e}")
+            raise Exception(f"D1 HTTP request failed: {e}")
         return self
 
     def fetchone(self):
-        rows = self._last_result.get("response", {}).get("result", {}).get("rows", [])
+        result = self._last_result.get("result", [])
+        rows = result[0].get("results", []) if result else []
         if rows:
-            return tuple(col.get("value") for col in rows[0])
+            # Return tuple of values in column order
+            return tuple(rows[0].get(col) for col in rows[0])
         return None
 
     def fetchall(self):
-        rows = self._last_result.get("response", {}).get("result", {}).get("rows", [])
-        return [tuple(col.get("value") for col in row) for row in rows]
+        result = self._last_result.get("result", [])
+        rows = result[0].get("results", []) if result else []
+        if not rows:
+            return []
+        cols = list(rows[0].keys())
+        return [tuple(row.get(c) for c in cols) for row in rows]
 
     @property
     def last_row_id(self):
-        return self._last_result.get("response", {}).get("result", {}).get("lastInsertRowid")
+        meta = self._last_result.get("result", [{}])[0].get("meta", {})
+        return meta.get("last_row_id")
 
     @staticmethod
     def test_connection():
         db = Database()
-        db.execute("SELECT 1")
-        print("RAW TURSO RESPONSE:")
-        print(json.dumps(db._last_raw, indent=2))
+        db.execute("SELECT 1 AS one")
         row = db.fetchone()
-        print(f"PARSED ROW: {row}")
-        if row and row[0] == "1":
-            print("Turso connection successful.")
+        print(f"D1 test row: {row}")
+        if row and row[0] == 1:
+            print("Cloudflare D1 connection successful.")
         else:
-            raise Exception(f"Turso connection test failed. Parsed row: {row}")
+            raise Exception("D1 connection test failed.")
 
 def get_db():
     return Database()
