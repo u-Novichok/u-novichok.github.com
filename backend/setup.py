@@ -25,4 +25,3 @@ def create_tables():
             created_at TEXT DEFAULT (datetime('now'))
         )
     """)
-    db.close()
