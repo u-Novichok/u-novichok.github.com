@@ -1,1 +1,142 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Image — Novichok Admin</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .upload-box {
+            background: #fff;
+            border: 1px solid #d9d9d9;
+            border-radius: 12px;
+            padding: 40px 30px;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        .upload-box h2 {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .upload-box label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .upload-box input, .upload-box textarea, .upload-box select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #d9d9d9;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        .upload-box button {
+            width: 100%;
+            padding: 12px;
+            background: #000;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .upload-box button:hover { background: #222; }
+        .message { text-align: center; margin-bottom: 15px; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <div class="upload-box">
+        <h2>Upload New Image</h2>
+        <div id="msg" class="message"></div>
+        <form id="uploadForm">
+            <label for="title">Title *</label>
+            <input type="text" id="title" required>
+
+            <label for="description">Description</label>
+            <textarea id="description" rows="3"></textarea>
+
+            <label for="category">Category</label>
+            <input type="text" id="category" value="OSINT">
+
+            <label for="country">Country</label>
+            <input type="text" id="country">
+
+            <label for="source">Source</label>
+            <input type="text" id="source">
+
+            <label for="capture_date">Capture Date</label>
+            <input type="date" id="capture_date">
+
+            <label for="resolution">Resolution</label>
+            <input type="text" id="resolution">
+
+            <label for="tags">Tags (comma separated)</label>
+            <input type="text" id="tags">
+
+            <label for="file">Image File *</label>
+            <input type="file" id="file" accept="image/*" required>
+
+            <button type="submit">Upload Image</button>
+        </form>
+        <p style="text-align:center; margin-top:15px;"><a href="dashboard.html">← Back to Dashboard</a></p>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('admin_token');
+        if (!token) window.location.href = 'login.html';
+
+        const form = document.getElementById('uploadForm');
+        const msgDiv = document.getElementById('msg');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            msgDiv.textContent = 'Uploading...';
+            msgDiv.className = 'message';
+
+            const formData = new FormData();
+            formData.append('title', document.getElementById('title').value);
+            formData.append('description', document.getElementById('description').value);
+            formData.append('category', document.getElementById('category').value);
+            formData.append('country', document.getElementById('country').value);
+            formData.append('source', document.getElementById('source').value);
+            formData.append('capture_date', document.getElementById('capture_date').value);
+            formData.append('resolution', document.getElementById('resolution').value);
+            formData.append('tags', document.getElementById('tags').value);
+            formData.append('file', document.getElementById('file').files[0]);
+
+            try {
+                const res = await fetch('https://novichok-api.onrender.com/admin/upload', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token },
+                    body: formData
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    msgDiv.textContent = `Success! Image ID: ${data.id} — URL: ${data.url}`;
+                    msgDiv.className = 'message success';
+                    form.reset();
+                } else {
+                    msgDiv.textContent = 'Error: ' + (data.detail || JSON.stringify(data));
+                    msgDiv.className = 'message error';
+                }
+            } catch (err) {
+                msgDiv.textContent = 'Network error. Please try again.';
+                msgDiv.className = 'message error';
+            }
+        });
+    </script>
+</body>
+</html>
