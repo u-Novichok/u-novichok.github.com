@@ -3,24 +3,20 @@ import { fetchMediaById, fetchMedia } from './api.js';
 const urlParams = new URLSearchParams(window.location.search);
 const imageId = parseInt(urlParams.get('id')) || 1;
 
-// Helper: optimized display version
+// Helpers for URL transformations
 function displayUrl(originalUrl) {
     return originalUrl.replace('/upload/', '/upload/q_auto,f_auto,w_1200/');
 }
 
-// Helper: thumbnail for related images
 function thumbnailUrl(originalUrl) {
     return originalUrl.replace('/upload/', '/upload/c_fill,w_400,h_267,q_auto,f_auto/');
 }
 
-// Helper: download version (original)
 function downloadUrl(originalUrl) {
-    return originalUrl;
+    return originalUrl; // Original quality for download
 }
 
-// ──────────────────────────────────────────────
-// MODAL POPUP – shown before actual download
-// ──────────────────────────────────────────────
+// ──────────────── DOWNLOAD POPUP ────────────────
 function showDownloadPopup(imageUrl, title, callback) {
     // Remove any existing popup
     const existing = document.getElementById('downloadPopup');
@@ -42,21 +38,20 @@ function showDownloadPopup(imageUrl, title, callback) {
     `;
 
     box.innerHTML = `
-        <h3 style="margin-bottom: 15px; font-size: 1.3rem;">Hosting costs 💸</h3>
+        <h3 style="margin-bottom: 15px; font-size: 1.3rem;">💸 Hosting Costs</h3>
         <p style="margin-bottom: 20px; color: #555; font-size: 0.95rem;">
-            Each download uses our free bandwidth. You can help us by <strong>copying the link</strong>
-            and sharing the page instead. The image stays available online.
+            Each download uses our limited bandwidth. You can help us by
+            <strong>copying the link</strong> and sharing it instead.<br>
+            The image will stay available online.
         </p>
         <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
             <button id="popupCopyBtn" style="
                 padding: 10px 20px; border: 2px solid #000; background: #fff;
                 color: #000; font-weight: bold; border-radius: 8px; cursor: pointer;
-                transition: 0.2s;
             ">📋 Copy Link</button>
             <button id="popupDownloadBtn" style="
                 padding: 10px 20px; border: none; background: #d32f2f;
                 color: #fff; font-weight: bold; border-radius: 8px; cursor: pointer;
-                transition: 0.2s;
             ">⬇️ Download Anyway</button>
         </div>
     `;
@@ -64,17 +59,14 @@ function showDownloadPopup(imageUrl, title, callback) {
     overlay.appendChild(box);
     document.body.appendChild(overlay);
 
-    // Close overlay if clicked outside box
+    // Close if clicking outside the box
     overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) {
-            overlay.remove();
-        }
+        if (e.target === overlay) overlay.remove();
     });
 
-    // Popup Copy Link → copies the page URL
+    // "Copy Link" button – copies the page URL (not the direct image URL)
     document.getElementById('popupCopyBtn').addEventListener('click', () => {
         navigator.clipboard.writeText(window.location.href);
-        // Brief visual feedback
         const btn = document.getElementById('popupCopyBtn');
         btn.textContent = '✅ Copied!';
         setTimeout(() => {
@@ -83,16 +75,14 @@ function showDownloadPopup(imageUrl, title, callback) {
         }, 1500);
     });
 
-    // Popup Download → run actual download and close popup
+    // "Download Anyway" button – triggers the actual download
     document.getElementById('popupDownloadBtn').addEventListener('click', () => {
         overlay.remove();
         if (callback) callback();
     });
 }
 
-// ──────────────────────────────────────────────
-// ACTUAL DOWNLOAD LOGIC
-// ──────────────────────────────────────────────
+// ──────────────── ACTUAL DOWNLOAD LOGIC ────────────────
 async function performDownload(imageUrl, title) {
     try {
         const response = await fetch(imageUrl);
@@ -116,9 +106,7 @@ async function performDownload(imageUrl, title) {
     }
 }
 
-// ──────────────────────────────────────────────
-// MAIN PAGE LOAD
-// ──────────────────────────────────────────────
+// ──────────────── MAIN PAGE LOAD ────────────────
 async function loadDetail() {
     try {
         const img = await fetchMediaById(imageId);
@@ -134,23 +122,22 @@ async function loadDetail() {
         document.getElementById('metaDate').textContent = img.capture_date || img.uploaded_at || '—';
         document.getElementById('metaResolution').textContent = img.resolution || '—';
 
-        // ── DOWNLOAD BUTTON (with popup) ──
-        const downloadBtn = document.getElementById('downloadBtn');
-        downloadBtn.addEventListener('click', () => {
+        // Download button → shows the popup first
+        document.getElementById('downloadBtn').addEventListener('click', () => {
             showDownloadPopup(downloadUrl(img.cloudinary_url), img.title, () => {
                 performDownload(downloadUrl(img.cloudinary_url), img.title);
             });
         });
 
-        // ── COPY LINK BUTTON (copies page URL, not image URL) ──
-        const copyBtn = document.getElementById('copyLinkBtn');
-        copyBtn.addEventListener('click', () => {
+        // Copy Link button → copies the page URL
+        document.getElementById('copyLinkBtn').addEventListener('click', () => {
             navigator.clipboard.writeText(window.location.href);
-            copyBtn.textContent = '✅ Copied!';
-            setTimeout(() => { copyBtn.textContent = 'Copy Link'; }, 2000);
+            const btn = document.getElementById('copyLinkBtn');
+            btn.textContent = '✅ Copied!';
+            setTimeout(() => { btn.textContent = 'Copy Link'; }, 2000);
         });
 
-        // ── PREVIOUS / NEXT ──
+        // Previous / Next navigation
         const allData = await fetchMedia({ limit: 100 });
         const ids = allData.items ? allData.items.map(i => i.id) : allData.map(i => i.id);
         const currentIndex = ids.indexOf(imageId);
@@ -164,7 +151,7 @@ async function loadDetail() {
             window.location.href = `image.html?id=${ids[newIndex]}`;
         });
 
-        // ── RELATED IMAGES ──
+        // Related images
         const related = (allData.items || allData).filter(i => i.id !== imageId).slice(0, 4);
         const relatedGrid = document.getElementById('relatedGrid');
         relatedGrid.innerHTML = '';
