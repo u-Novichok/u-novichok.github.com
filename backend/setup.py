@@ -25,4 +25,4 @@ def create_tables():
             created_at TEXT DEFAULT (datetime('now'))
         )
     """)
-    print("Tables created/verified.")
+    db.close()
