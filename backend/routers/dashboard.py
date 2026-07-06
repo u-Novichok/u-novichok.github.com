@@ -23,14 +23,13 @@ def dashboard_stats(admin = Depends(get_current_admin)):
             total_videos = count
         total_media += count
 
-    # Storage: sum of file_size if column exists (optional, currently 0)
-    # In future: ALTER TABLE media ADD COLUMN file_size INTEGER DEFAULT 0;
+    # Storage: sum file_size if column exists (optional)
     try:
         size_rows = db.execute("SELECT SUM(file_size) FROM media").fetchone()
         if size_rows and size_rows[0]:
             storage_used_bytes = size_rows[0]
     except:
-        pass  # column may not exist yet
+        pass
 
     # Recent uploads (last 5)
     recent = db.execute(
@@ -49,12 +48,12 @@ def dashboard_stats(admin = Depends(get_current_admin)):
         "total_videos": total_videos,
         "total_media": total_media,
         "storage_used_bytes": storage_used_bytes,
-        "storage_used_mb": round(storage_used_bytes / (1024*1024), 2),
+        "storage_used_mb": round(storage_used_bytes / (1024*1024), 2) if storage_used_bytes else 0,
         "recent_uploads": recent_list,
         "render_status": "online",
-        "d1_storage_mb": 2.1,          # placeholder, fetch from Cloudflare later
-        "d1_requests_monthly": 98500,  # placeholder
-        "visitors_today": 342,         # placeholder – add tracking later
+        "d1_storage_mb": 2.1,           # placeholder
+        "d1_requests_monthly": 98500,   # placeholder
+        "visitors_today": 342,
         "visitors_month": 4589,
         "visitors_year": 32100,
         "shares_total": 8742
