@@ -4,84 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Login — Novichok</title>
-    <style>
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body {
-            font-family: Arial, Helvetica, sans-serif;
-            background: #f4f4f4;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-        .login-box {
-            background: #fff;
-            border: 1px solid #d9d9d9;
-            border-radius: 12px;
-            padding: 40px 30px;
-            width: 100%;
-            max-width: 400px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-        }
-        .login-box h2 {
-            text-align: center;
-            margin-bottom: 30px;
-            font-weight: bold;
-            font-size: 28px;
-        }
-        .login-box label {
-            display: block;
-            margin-bottom: 6px;
-            font-weight: bold;
-            color: #333;
-        }
-        .login-box input {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 20px;
-            border: 1px solid #d9d9d9;
-            border-radius: 8px;
-            font-size: 16px;
-        }
-        .login-box button {
-            width: 100%;
-            padding: 12px;
-            background: #000;
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .login-box button:hover {
-            background: #222;
-        }
-        .error {
-            color: red;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-        .success {
-            color: green;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-    </style>
+    <link rel="stylesheet" href="css/admin.css">
 </head>
 <body>
-    <div class="login-box">
-        <h2>Novichok Admin</h2>
-        <div id="message"></div>
-        <form id="loginForm">
-            <label for="email">Email</label>
-            <input type="email" id="email" required placeholder="admin@example.com">
-            <label for="password">Password</label>
-            <input type="password" id="password" required placeholder="••••••••">
-            <button type="submit">Login</button>
-        </form>
-    </div>
+
+    <header class="site-header">
+        <span class="site-title">Novichok</span>
+    </header>
+
+    <main class="admin-container" style="display:flex; align-items:center; justify-content:center;">
+        <div class="admin-card" style="width:100%; max-width:420px;">
+            <h2>Admin Login</h2>
+            <div id="message" class="message"></div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" required placeholder="admin@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Login</button>
+            </form>
+        </div>
+    </main>
+
+    <footer class="admin-footer">
+        made by 
+        <a href="https://x.com/SkywardAdi" target="_blank" rel="noopener">x/skyward (@SkywardAdi)</a>
+        &amp;
+        <a href="https://x.com/adeep_ag" target="_blank" rel="noopener">x/adeep_ag (@adeep_ag)</a>
+    </footer>
 
     <script>
         const form = document.getElementById('loginForm');
@@ -91,9 +45,8 @@
             e.preventDefault();
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-
             msgDiv.textContent = '';
-            msgDiv.className = '';
+            msgDiv.className = 'message';
 
             try {
                 const res = await fetch('https://novichok-api.onrender.com/admin/login', {
@@ -101,23 +54,19 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
                 });
-
                 const data = await res.json();
-
                 if (res.ok && data.access_token) {
                     localStorage.setItem('admin_token', data.access_token);
                     msgDiv.textContent = 'Login successful! Redirecting…';
-                    msgDiv.className = 'success';
-                    setTimeout(() => {
-                        window.location.href = 'dashboard.html';
-                    }, 1000);
+                    msgDiv.className = 'message message-success';
+                    setTimeout(() => { window.location.href = 'dashboard.html'; }, 1000);
                 } else {
                     msgDiv.textContent = 'Invalid credentials';
-                    msgDiv.className = 'error';
+                    msgDiv.className = 'message message-error';
                 }
             } catch (err) {
                 msgDiv.textContent = 'Network error, please try again.';
-                msgDiv.className = 'error';
+                msgDiv.className = 'message message-error';
             }
         });
     </script>
