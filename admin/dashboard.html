@@ -3,63 +3,538 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard — Novichok Admin</title>
-    <link rel="stylesheet" href="css/admin.css">
+    <title>Admin Panel — Novichok</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:Arial,Helvetica,sans-serif; background:#f4f4f4; color:#222; display:flex; min-height:100vh; }
+
+        .site-header { position:fixed; top:0; left:0; right:0; height:70px; background:#000; display:flex; align-items:center; justify-content:center; z-index:1000; }
+        .site-title { color:#fff; font-size:32px; font-weight:bold; }
+
+        .sidebar { width:240px; background:#111; color:#ccc; padding:20px 0; display:flex; flex-direction:column; position:fixed; top:70px; left:0; bottom:0; z-index:500; transition:transform 0.3s; }
+        .sidebar a { display:flex; align-items:center; gap:12px; padding:14px 20px; color:#bbb; text-decoration:none; font-size:15px; transition:background 0.2s, color 0.2s; border-left:4px solid transparent; cursor:pointer; }
+        .sidebar a:hover, .sidebar a.active { background:#222; color:#fff; border-left-color:#fff; }
+        .sidebar a i { width:20px; text-align:center; font-size:16px; }
+        .sidebar .brand { padding:0 20px 20px; font-size:22px; font-weight:bold; color:#fff; letter-spacing:0.5px; border-bottom:1px solid #333; margin-bottom:10px; display:flex; align-items:center; gap:10px; }
+        .sidebar .brand i { font-size:24px; }
+
+        .main-content { margin-left:240px; margin-top:70px; padding:30px; flex:1; transition:margin-left 0.3s; }
+        .tab-section { display:none; }
+        .tab-section.active { display:block; }
+
+        .stats-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:20px; margin-bottom:30px; }
+        .stat-card { background:#fff; border:1px solid #d9d9d9; border-radius:12px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.04); display:flex; align-items:center; gap:15px; }
+        .stat-icon { width:48px; height:48px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:22px; color:#fff; background:#000; }
+        .stat-info h3 { font-size:13px; text-transform:uppercase; letter-spacing:0.5px; color:#777; margin-bottom:5px; }
+        .stat-info .value { font-size:24px; font-weight:700; }
+        .stat-info .sub { font-size:12px; color:#999; }
+
+        .panel-row { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:30px; }
+        .panel { background:#fff; border:1px solid #d9d9d9; border-radius:12px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.04); }
+        .panel h3 { font-size:16px; margin-bottom:15px; display:flex; align-items:center; gap:8px; }
+        .top-list { list-style:none; }
+        .top-list li { display:flex; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid #f0f0f0; }
+        .top-list li:last-child { border-bottom:none; }
+        .top-list img, .top-list video { width:40px; height:30px; object-fit:cover; border-radius:4px; }
+        .top-list .name { flex:1; font-weight:500; }
+        .top-list .count { color:#777; font-size:13px; }
+
+        .form-card { background:#fff; border:1px solid #d9d9d9; border-radius:12px; padding:30px; max-width:800px; margin:0 auto; }
+        .form-group { margin-bottom:18px; }
+        .form-group label { display:block; font-weight:600; margin-bottom:5px; color:#333; }
+        .form-group input, .form-group textarea, .form-group select { width:100%; padding:11px 14px; border:1px solid #d9d9d9; border-radius:8px; font-size:15px; transition:border 0.2s; }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline:none; border-color:#000; }
+        .form-row { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+        .btn { display:inline-block; padding:11px 22px; font-size:15px; font-weight:600; border-radius:8px; cursor:pointer; text-decoration:none; transition:background 0.2s; border:none; }
+        .btn-primary { background:#000; color:#fff; }
+        .btn-primary:hover { background:#1a1a1a; }
+        .btn-danger { background:#d32f2f; color:#fff; }
+        .btn-danger:hover { background:#b71c1c; }
+        .btn-outline { background:#fff; color:#222; border:2px solid #bbb; }
+        .btn-outline:hover { background:#f4f4f4; }
+        .btn-block { width:100%; }
+
+        .media-table { width:100%; border-collapse:collapse; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.04); }
+        .media-table th, .media-table td { padding:12px 16px; text-align:left; border-bottom:1px solid #eee; }
+        .media-table th { background:#f9f9f9; font-weight:600; }
+
+        .mobile-toggle { display:none; position:fixed; top:80px; left:10px; z-index:1100; background:#000; color:#fff; border:none; padding:8px 12px; border-radius:6px; font-size:20px; }
+
+        /* Upload specifics */
+        .drop-zone {
+            border:2px dashed #bbb;
+            border-radius:12px;
+            padding:40px 20px;
+            text-align:center;
+            background:#fafafa;
+            transition:border-color 0.3s, background 0.3s;
+            cursor:pointer;
+            margin-bottom:20px;
+        }
+        .drop-zone.dragover { border-color:#000; background:#f0f0f0; }
+        .drop-zone i { font-size:48px; color:#888; margin-bottom:10px; }
+        .drop-zone p { color:#666; margin:5px 0; }
+        .drop-zone .browse-btn { color:#000; text-decoration:underline; cursor:pointer; }
+        .file-preview {
+            display:flex;
+            align-items:center;
+            gap:15px;
+            background:#f4f4f4;
+            padding:10px 15px;
+            border-radius:8px;
+            margin-bottom:15px;
+        }
+        .file-preview img, .file-preview video {
+            width:80px; height:60px;
+            object-fit:cover;
+            border-radius:6px;
+        }
+        .file-info { flex:1; }
+        .file-info .file-name { font-weight:600; margin-bottom:3px; }
+        .file-info .file-size { font-size:12px; color:#777; }
+        .remove-file { background:none; border:none; color:#c62828; cursor:pointer; font-size:18px; }
+        .progress-bar { height:8px; background:#e0e0e0; border-radius:4px; margin:15px 0; overflow:hidden; }
+        .progress-fill { height:100%; background:#000; width:0%; transition:width 0.4s; }
+        .message { margin-bottom:15px; font-weight:500; }
+        .message-success { color:#2e7d32; }
+        .message-error { color:#c62828; }
+        .info-box { background:#f9f9f9; border:1px solid #e0e0e0; border-radius:8px; padding:15px; margin-bottom:20px; font-size:14px; color:#555; }
+        .info-box strong { color:#000; }
+
+        @media (max-width:900px) {
+            .sidebar { transform:translateX(-240px); }
+            .sidebar.open { transform:translateX(0); }
+            .main-content { margin-left:0; }
+            .mobile-toggle { display:block; }
+            .panel-row { grid-template-columns:1fr; }
+            .form-row { grid-template-columns:1fr; }
+        }
+    </style>
 </head>
 <body>
-
     <header class="site-header">
         <span class="site-title">Novichok</span>
     </header>
 
-    <main class="admin-container">
-        <h2 style="margin-bottom:20px;">Dashboard</h2>
+    <button class="mobile-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
 
-        <div class="nav-links">
-            <a href="upload.html" class="btn btn-primary">Upload Media</a>
-            <a href="edit.html" class="btn btn-outline">Manage Media</a>
+    <aside class="sidebar" id="sidebar">
+        <div class="brand"><i class="fas fa-shield-alt"></i> Admin</div>
+        <a data-tab="dashboard" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a data-tab="upload"><i class="fas fa-cloud-upload-alt"></i> Upload Media</a>
+        <a data-tab="manage"><i class="fas fa-edit"></i> Manage Media</a>
+        <a data-tab="library"><i class="fas fa-eye"></i> View Library</a>
+        <a onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </aside>
+
+    <main class="main-content" id="mainContent">
+        <!-- Dashboard Tab -->
+        <div class="tab-section active" id="tab-dashboard">
+            <h2 style="margin-bottom:25px;">Dashboard Overview</h2>
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-icon" style="background:#4caf50;"><i class="fas fa-image"></i></div><div class="stat-info"><h3>Total Images</h3><div class="value">1,248</div><div class="sub">+12 this week</div></div></div>
+                <div class="stat-card"><div class="stat-icon" style="background:#ff9800;"><i class="fas fa-video"></i></div><div class="stat-info"><h3>Total Videos</h3><div class="value">86</div><div class="sub">+3 today</div></div></div>
+                <div class="stat-card"><div class="stat-icon" style="background:#2196f3;"><i class="fas fa-database"></i></div><div class="stat-info"><h3>Storage Used</h3><div class="value">4.2 GB</div><div class="sub">of 25 GB (Cloudinary)</div></div></div>
+                <div class="stat-card"><div class="stat-icon" style="background:#9c27b0;"><i class="fas fa-hdd"></i></div><div class="stat-info"><h3>Storage Left</h3><div class="value">20.8 GB</div><div class="sub">82% free</div></div></div>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-icon" style="background:#e91e63;"><i class="fas fa-users"></i></div><div class="stat-info"><h3>Visitors Today</h3><div class="value">342</div></div></div>
+                <div class="stat-card"><div class="stat-icon" style="background:#00bcd4;"><i class="fas fa-calendar-week"></i></div><div class="stat-info"><h3>This Month</h3><div class="value">4,589</div></div></div>
+                <div class="stat-card"><div class="stat-icon" style="background:#ff5722;"><i class="fas fa-calendar-alt"></i></div><div class="stat-info"><h3>This Year</h3><div class="value">32,100</div></div></div>
+                <div class="stat-card"><div class="stat-icon" style="background:#607d8b;"><i class="fas fa-share-alt"></i></div><div class="stat-info"><h3>Total Shares</h3><div class="value">8,742</div></div></div>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-icon" style="background:#000;"><i class="fas fa-server"></i></div><div class="stat-info"><h3>Render API Calls</h3><div class="value">12,450</div><div class="sub">this month</div></div></div>
+                <div class="stat-card"><div class="stat-icon" style="background:#666;"><i class="fas fa-clock"></i></div><div class="stat-info"><h3>Render Status</h3><div class="value" style="color:green;">Online</div><div class="sub">uptime 99.8%</div></div></div>
+                <div class="stat-card"><div class="stat-icon" style="background:#f6821f;"><i class="fas fa-cloud"></i></div><div class="stat-info"><h3>Cloudflare D1</h3><div class="value">2.1 MB</div><div class="sub">5 MB limit</div></div></div>
+                <div class="stat-card"><div class="stat-icon" style="background:#f6821f;"><i class="fas fa-chart-bar"></i></div><div class="stat-info"><h3>D1 Requests</h3><div class="value">98,500</div><div class="sub">/ 5M monthly</div></div></div>
+            </div>
+            <div class="panel-row">
+                <div class="panel"><h3><i class="fas fa-chart-bar"></i> Top 5 Media (Views)</h3><canvas id="topMediaChart" height="200"></canvas></div>
+                <div class="panel"><h3><i class="fas fa-share-alt"></i> Top 5 Shared</h3>
+                    <ul class="top-list" id="topSharedList"></ul>
+                </div>
+            </div>
+            <div class="panel"><h3><i class="fas fa-chart-line"></i> Visitor Trend (Last 7 Days)</h3><canvas id="visitorChart" height="80"></canvas></div>
         </div>
 
-        <div class="dashboard-grid" id="statsGrid">
-            <div class="stat-card"><h3>Total Images</h3><div class="stat-value">—</div></div>
-            <div class="stat-card"><h3>Storage Used</h3><div class="stat-value">—</div></div>
+        <!-- Upload Tab -->
+        <div class="tab-section" id="tab-upload">
+            <h2 style="margin-bottom:20px;">Upload Media</h2>
+            <div class="form-card">
+                <div id="uploadMessage"></div>
+                <form id="uploadForm">
+                    <div class="drop-zone" id="dropZone">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p><strong>Drag & drop files here</strong> or <span class="browse-btn">browse</span></p>
+                        <p style="font-size:13px; color:#888;">Accepted: JPG, PNG, WebP, MP4, WebM • Maximum size: <strong>10 MB</strong></p>
+                        <input type="file" id="fileInput" accept="image/*,video/*" style="display:none;">
+                    </div>
+                    <div id="filePreview" class="file-preview" style="display:none;">
+                        <div id="previewContainer"></div>
+                        <div class="file-info">
+                            <div class="file-name" id="fileName"></div>
+                            <div class="file-size" id="fileSize"></div>
+                        </div>
+                        <button type="button" class="remove-file" id="removeFile"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="progress-bar" id="progressBar" style="display:none;">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group"><label>Title *</label><input type="text" id="title" required></div>
+                        <div class="form-group"><label>Category</label><input type="text" id="category" value="OSINT"></div>
+                    </div>
+                    <div class="form-group"><label>Description</label><textarea id="description" rows="3"></textarea></div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Country</label><input type="text" id="country"></div>
+                        <div class="form-group"><label>Source</label><input type="text" id="source"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Capture Date</label><input type="date" id="capture_date"></div>
+                        <div class="form-group"><label>Resolution</label><input type="text" id="resolution"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Tags (comma separated)</label><input type="text" id="tags" placeholder="e.g., tank, drone, ukraine"></div>
+                        <div class="form-group"><label>Group ID <span style="font-weight:400;color:#888;">(optional)</span></label><input type="number" id="parent_id" placeholder="Enter existing media ID"></div>
+                    </div>
+
+                    <div class="info-box">
+                        <strong>📌 Group ID explained</strong><br>
+                        Use this to <strong>link multiple media into one post</strong>. Enter the ID of an existing image/video to add this upload to the same group. Visitors will see all group members as a carousel on the detail page.<br><br>
+                        <strong>Possible combinations:</strong><br>
+                        • Image + Image → photo series<br>
+                        • Video + Video → multi‑clip post<br>
+                        • Image + Video → mixed media gallery<br>
+                        • Image + Image + Video → full mixed carousel<br><br>
+                        Leave empty for standalone media.
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block" id="uploadBtn">Upload Media</button>
+                </form>
+            </div>
         </div>
 
-        <button onclick="logout()" class="btn btn-outline" style="margin-top:10px;">Logout</button>
+        <!-- Manage Tab -->
+        <div class="tab-section" id="tab-manage">
+            <h2 style="margin-bottom:20px;">Manage Media</h2>
+            <div id="manageMessage" class="message"></div>
+            <div style="overflow-x:auto;">
+                <table class="media-table" id="mediaTable">
+                    <thead><tr><th>Preview</th><th>Title</th><th>Type</th><th>Date</th><th>Actions</th></tr></thead>
+                    <tbody id="mediaTableBody">
+                        <tr><td colspan="5">Loading…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- View Library Tab -->
+        <div class="tab-section" id="tab-library">
+            <div style="text-align:center; margin-top:80px;">
+                <i class="fas fa-external-link-alt" style="font-size:60px; color:#000;"></i>
+                <h2 style="margin:20px 0;">View Public Library</h2>
+                <p>Your library is live at:</p>
+                <a href="https://u-novichok.github.io/nalanda.html" target="_blank" class="btn btn-primary" style="margin-top:15px;">Open Nalanda Gallery</a>
+            </div>
+        </div>
     </main>
 
-    <footer class="admin-footer">
+    <footer style="border-top:1px solid #d9d9d9; padding:16px 20px; text-align:left; font-size:0.85rem; color:#666; background:#fff; margin-top:auto;">
         made by 
-        <a href="https://x.com/SkywardAdi" target="_blank" rel="noopener">x/skyward (@SkywardAdi)</a>
+        <a href="https://x.com/SkywardAdi" target="_blank" rel="noopener" style="color:#333; text-decoration:none; font-weight:500;">x/skyward (@SkywardAdi)</a>
         &amp;
-        <a href="https://x.com/adeep_ag" target="_blank" rel="noopener">x/adeep_ag (@adeep_ag)</a>
+        <a href="https://x.com/adeep_ag" target="_blank" rel="noopener" style="color:#333; text-decoration:none; font-weight:500;">x/adeep_ag (@adeep_ag)</a>
     </footer>
 
     <script>
+        // Auth check – redirect if not logged in
         const token = localStorage.getItem('admin_token');
         if (!token) window.location.href = 'login.html';
 
-        async function loadStats() {
-            try {
-                const res = await fetch('https://novichok-api.onrender.com/admin/stats', {
-                    headers: { 'Authorization': 'Bearer ' + token }
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    document.querySelectorAll('.stat-value')[0].textContent = data.totalImages || 0;
-                    document.querySelectorAll('.stat-value')[1].textContent = data.storageUsedFormatted || '0 MB';
-                }
-            } catch (e) {
-                console.error('Stats failed:', e);
-            }
-        }
+        const API_BASE = 'https://novichok-api.onrender.com';
+
+        // ---------- Tab switching ----------
+        const tabs = document.querySelectorAll('.sidebar a[data-tab]');
+        const sections = document.querySelectorAll('.tab-section');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                sections.forEach(s => s.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
+                if (tab.dataset.tab === 'manage') loadManageTab();
+                if (tab.dataset.tab === 'dashboard') initCharts();
+                document.getElementById('sidebar').classList.remove('open');
+            });
+        });
+
+        document.getElementById('menuToggle').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('open');
+        });
 
         function logout() {
             localStorage.removeItem('admin_token');
             window.location.href = 'login.html';
         }
 
-        loadStats();
+        // ---------- Upload logic ----------
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const filePreview = document.getElementById('filePreview');
+        const previewContainer = document.getElementById('previewContainer');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const removeFileBtn = document.getElementById('removeFile');
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = document.getElementById('progressFill');
+        const uploadMessage = document.getElementById('uploadMessage');
+        let selectedFile = null;
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', handleFileSelect);
+        dropZone.addEventListener('dragover', e => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', e => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                handleFileSelect();
+            }
+        });
+
+        function handleFileSelect() {
+            const file = fileInput.files[0];
+            if (!file) return;
+            if (file.size > 10 * 1024 * 1024) {
+                showUploadMessage('File exceeds 10 MB limit. Please compress or choose a smaller file.', 'error');
+                resetFile();
+                return;
+            }
+            selectedFile = file;
+            fileName.textContent = file.name;
+            fileSize.textContent = formatBytes(file.size);
+            dropZone.style.display = 'none';
+            filePreview.style.display = 'flex';
+            previewContainer.innerHTML = '';
+            if (file.type.startsWith('image/')) {
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(file);
+                previewContainer.appendChild(img);
+            } else if (file.type.startsWith('video/')) {
+                const video = document.createElement('video');
+                video.src = URL.createObjectURL(file);
+                video.controls = false;
+                video.muted = true;
+                video.preload = 'metadata';
+                video.onloadeddata = () => video.currentTime = 1;
+                video.onseeked = () => video.pause();
+                previewContainer.appendChild(video);
+            }
+        }
+
+        function resetFile() {
+            selectedFile = null;
+            fileInput.value = '';
+            dropZone.style.display = 'block';
+            filePreview.style.display = 'none';
+            previewContainer.innerHTML = '';
+            fileName.textContent = '';
+            fileSize.textContent = '';
+            progressBar.style.display = 'none';
+            progressFill.style.width = '0%';
+        }
+
+        removeFileBtn.addEventListener('click', resetFile);
+
+        document.getElementById('uploadForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            if (!selectedFile) {
+                showUploadMessage('Please select a file.', 'error');
+                return;
+            }
+            uploadMessage.textContent = '';
+            progressBar.style.display = 'block';
+            progressFill.style.width = '0%';
+            let fakeWidth = 0;
+            const interval = setInterval(() => {
+                if (fakeWidth < 90) {
+                    fakeWidth += Math.random() * 15 + 5;
+                    if (fakeWidth > 90) fakeWidth = 90;
+                    progressFill.style.width = fakeWidth + '%';
+                }
+            }, 250);
+
+            const formData = new FormData();
+            formData.append('title', document.getElementById('title').value);
+            formData.append('description', document.getElementById('description').value);
+            formData.append('category', document.getElementById('category').value);
+            formData.append('country', document.getElementById('country').value);
+            formData.append('source', document.getElementById('source').value);
+            formData.append('capture_date', document.getElementById('capture_date').value);
+            formData.append('resolution', document.getElementById('resolution').value);
+            formData.append('tags', document.getElementById('tags').value);
+            formData.append('file', selectedFile);
+            const parentId = document.getElementById('parent_id').value;
+            if (parentId) formData.append('parent_id', parentId);
+
+            try {
+                const res = await fetch(`${API_BASE}/admin/upload`, {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token },
+                    body: formData
+                });
+                clearInterval(interval);
+                progressFill.style.width = '100%';
+                const data = await res.json();
+                if (res.ok) {
+                    showUploadMessage(`✅ Uploaded! ID: ${data.id} — ${data.url}`, 'success');
+                    resetFile();
+                } else {
+                    showUploadMessage('Error: ' + (data.detail || 'Upload failed'), 'error');
+                }
+            } catch (err) {
+                clearInterval(interval);
+                showUploadMessage('Network error. Please try again.', 'error');
+            } finally {
+                setTimeout(() => {
+                    progressBar.style.display = 'none';
+                }, 1200);
+            }
+        });
+
+        function showUploadMessage(msg, type) {
+            uploadMessage.textContent = msg;
+            uploadMessage.className = 'message message-' + type;
+        }
+
+        function formatBytes(bytes) {
+            if (!bytes) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // ---------- Manage tab (live data) ----------
+        async function loadManageTab() {
+            const tbody = document.getElementById('mediaTableBody');
+            tbody.innerHTML = '<tr><td colspan="5">Loading…</td></tr>';
+            try {
+                const res = await fetch(`${API_BASE}/media?limit=50`);
+                const data = await res.json();
+                const items = data.items || data;
+                if (!items || items.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5">No media found.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = '';
+                items.forEach(item => {
+                    const tr = document.createElement('tr');
+                    const thumb = item.media_type === 'video'
+                        ? `<video src="${item.cloudinary_url}" style="width:60px;height:45px;object-fit:cover;border-radius:4px;" muted></video>`
+                        : `<img src="${item.cloudinary_url}" style="width:60px;height:45px;object-fit:cover;border-radius:4px;">`;
+                    tr.innerHTML = `
+                        <td>${thumb}</td>
+                        <td>${item.title}</td>
+                        <td>${item.media_type || 'image'}</td>
+                        <td>${item.uploaded_at || item.capture_date || '—'}</td>
+                        <td>
+                            <button class="btn btn-outline" style="margin-right:5px;" onclick="editMedia(${item.id})">Edit</button>
+                            <button class="btn btn-danger" onclick="deleteMedia(${item.id})">Delete</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="5">Failed to load.</td></tr>';
+            }
+        }
+
+        window.editMedia = id => alert('Edit functionality coming soon for ID ' + id);
+        window.deleteMedia = async id => {
+            if (!confirm('Delete this media permanently?')) return;
+            try {
+                const res = await fetch(`${API_BASE}/admin/media/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const manageMsg = document.getElementById('manageMessage');
+                if (res.ok) {
+                    manageMsg.textContent = 'Deleted successfully.';
+                    manageMsg.className = 'message message-success';
+                    loadManageTab();
+                } else {
+                    const err = await res.json();
+                    manageMsg.textContent = 'Error: ' + err.detail;
+                    manageMsg.className = 'message message-error';
+                }
+            } catch (err) {
+                const manageMsg = document.getElementById('manageMessage');
+                manageMsg.textContent = 'Network error.';
+                manageMsg.className = 'message message-error';
+            }
+        };
+
+        // ---------- Dashboard charts ----------
+        function initCharts() {
+            const ctx1 = document.getElementById('topMediaChart');
+            if (ctx1 && !ctx1.chart) {
+                new Chart(ctx1, {
+                    type: 'bar',
+                    data: {
+                        labels: ['T-90M', 'PAF Vid', 'Sevastopol', 'HIMARS', 'Drone'],
+                        datasets: [{
+                            label: 'Views',
+                            data: [3400, 2890, 2200, 1800, 1650],
+                            backgroundColor: '#000',
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true } }
+                    }
+                });
+            }
+            const ctx2 = document.getElementById('visitorChart');
+            if (ctx2 && !ctx2.chart) {
+                new Chart(ctx2, {
+                    type: 'line',
+                    data: {
+                        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                        datasets: [{
+                            label: 'Visitors',
+                            data: [380, 420, 450, 390, 480, 520, 342],
+                            borderColor: '#000',
+                            backgroundColor: 'rgba(0,0,0,0.05)',
+                            fill: true,
+                            tension: 0.3,
+                            pointBackgroundColor: '#000'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true } }
+                    }
+                });
+            }
+        }
+        window.addEventListener('load', initCharts);
+        tabs.forEach(tab => {
+            if (tab.dataset.tab === 'dashboard') {
+                tab.addEventListener('click', () => setTimeout(initCharts, 100));
+            }
+        });
     </script>
 </body>
 </html>
