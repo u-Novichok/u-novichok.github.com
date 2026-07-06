@@ -1,5 +1,3 @@
-
-// api.js – Novichok API helper
 const API_BASE = 'https://novichok-api.onrender.com';
 
 export async function fetchMedia({ category, search, skip, limit } = {}) {
