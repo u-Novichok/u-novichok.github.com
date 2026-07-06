@@ -49,7 +49,6 @@ function showDownloadPopup(imageUrl, title, callback) {
         navigator.clipboard.writeText(shareUrl);
         const btn = document.getElementById('popupCopyBtn');
         btn.textContent = '✅ Copied!';
-        // Track share
         fetch('https://novichok-api.onrender.com/api/track/share', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -146,7 +145,6 @@ async function loadDetail() {
         const img = await fetchMediaById(imageId);
         document.title = `${img.title} — Novichok`;
 
-        // Track media view
         fetch('https://novichok-api.onrender.com/api/track/media-view', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -170,7 +168,15 @@ async function loadDetail() {
         document.getElementById('metaCategory').textContent = img.category || '—';
         document.getElementById('metaCountry').textContent = img.country || '—';
         document.getElementById('metaSource').textContent = img.source || '—';
-        document.getElementById('metaDate').textContent = img.capture_date || img.uploaded_at || '—';
+
+        // Fix date display – strip time part
+        const rawDate = img.capture_date || img.uploaded_at;
+        let displayDate = '—';
+        if (rawDate) {
+            displayDate = rawDate.split('T')[0].split(' ')[0];
+        }
+        document.getElementById('metaDate').textContent = displayDate;
+
         document.getElementById('metaResolution').textContent = img.resolution || '—';
 
         document.getElementById('downloadBtn').addEventListener('click', () => {
@@ -185,7 +191,6 @@ async function loadDetail() {
             navigator.clipboard.writeText(shareUrl);
             const btn = document.getElementById('copyLinkBtn');
             btn.textContent = '✅ Copied!';
-            // Track share
             fetch('https://novichok-api.onrender.com/api/track/share', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
