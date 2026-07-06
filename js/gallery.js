@@ -6,8 +6,9 @@ let autoRefreshInterval = null;
 function thumbnailUrl(originalUrl, mediaType) {
     if (!originalUrl) return '';
     if (mediaType === 'video') {
-        // For videos, use a video thumbnail transformation
-        return originalUrl.replace('/upload/', '/upload/c_fill,w_400,h_267,q_auto,f_auto,so_1/');
+        // For videos: use the first frame as thumbnail
+        return originalUrl.replace('/upload/', '/upload/so_1/')
+            .replace(/\.[^/.]+$/, '.jpg');
     }
     return originalUrl.replace('/upload/', '/upload/c_fill,w_400,h_267,q_auto,f_auto/');
 }
