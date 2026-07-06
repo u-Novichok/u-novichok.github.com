@@ -12,13 +12,10 @@ def share_page(id: int):
         raise HTTPException(404, "Media not found")
     row = rows[0]
 
-    # Full title (may be long)
     full_title = row[1] if row[1] else "Novichok Media"
-    # Short title for social cards (max 60 chars)
     short_title = (full_title[:57] + "...") if len(full_title) > 60 else full_title
 
     description = row[2] if row[2] else ""
-    # If description is missing, provide a fallback
     if not description.strip():
         description = "View this OSINT / defence image on Novichok."
 
@@ -28,7 +25,6 @@ def share_page(id: int):
     original_url = row[7] if len(row) > 7 else ""
     page_url = f"https://u-novichok.github.io/image.html?id={id}"
 
-    # Build a proper 1200×630 thumbnail URL
     if media_type == "video":
         thumbnail_url = original_url.replace("/upload/", "/upload/so_1,c_fill,w_1200,h_630/")
         if thumbnail_url.endswith(".mp4"):
@@ -70,7 +66,6 @@ def share_page(id: int):
     <meta name="twitter:player:width" content="1280">
     <meta name="twitter:player:height" content="720">"""
 
-    # Use a 3‑second refresh so crawlers have time to read the meta tags
     html += f"""
     <meta http-equiv="refresh" content="3;url={page_url}">
 </head>
