@@ -6,6 +6,15 @@
     <title>Image Details — Novichok</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
+    <script>
+    (function() {
+        fetch('https://novichok-api.onrender.com/api/track/view', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ page: 'detail', media_id: new URLSearchParams(window.location.search).get('id') })
+        }).catch(()=>{});
+    })();
+    </script>
 <body>
     <header class="site-header">
         <span class="site-title">Novichok</span>
