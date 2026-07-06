@@ -12,7 +12,12 @@ async def upload_media_route(
     title: str = Form(...),
     description: str = Form(""),
     category: str = Form(""),
+    country: str = Form(""),
+    source: str = Form(""),
+    capture_date: str = Form(""),
+    resolution: str = Form(""),
     tags: str = Form(""),
+    parent_id: int = Form(None),
     file: UploadFile = File(...),
     admin = Depends(get_current_admin)
 ):
@@ -24,15 +29,29 @@ async def upload_media_route(
     except Exception as e:
         raise HTTPException(500, f"Cloudinary upload failed: {str(e)}")
 
-    # Try to insert into D1; if it fails, still return success
+    detected_type = "video" if file.content_type.startswith("video/") else "image"
+
     db_id = None
     try:
         db = get_db()
-        detected_type = "video" if file.content_type.startswith("video/") else "image"
-
         db.execute(
-             "INSERT INTO media (title, description, category, tags, media_type, cloudinary_public_id, cloudinary_url) VALUES (?,?,?,?,?,?,?)",
-              (title, description, category, tags, detected_type, public_id, secure_url)
+            "INSERT INTO media (title, description, category, tags, media_type, country, source, resolution, capture_date, cloudinary_public_id, cloudinary_url, file_size, parent_id) "
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (
+                title,
+                description,
+                category,
+                tags,
+                detected_type,
+                country,
+                source,
+                resolution,
+                capture_date,
+                public_id,
+                secure_url,
+                len(contents),
+                parent_id
+            )
         )
         db_id = db.last_row_id
         print(f"Inserted media with id: {db_id}")
