@@ -6,14 +6,15 @@ const imageId = parseInt(urlParams.get('id')) || 1;
 // Helpers for URL transformations
 function displayUrl(originalUrl, mediaType) {
     if (!originalUrl) return '';
-    if (mediaType === 'video') return originalUrl; // Don't transform videos
+    if (mediaType === 'video') return originalUrl;
     return originalUrl.replace('/upload/', '/upload/q_auto,f_auto,w_1200/');
 }
 
 function thumbnailUrl(originalUrl, mediaType) {
     if (!originalUrl) return '';
     if (mediaType === 'video') {
-        return originalUrl.replace('/upload/', '/upload/c_fill,w_400,h_267,q_auto,f_auto,so_1/');
+        return originalUrl.replace('/upload/', '/upload/so_1/')
+            .replace(/\.[^/.]+$/, '.jpg');
     }
     return originalUrl.replace('/upload/', '/upload/c_fill,w_400,h_267,q_auto,f_auto/');
 }
@@ -155,18 +156,11 @@ function buildCarousel(mediaItems, currentId) {
             `;
 
             if (item.media_type === 'video') {
-                const videoThumb = document.createElement('video');
-                videoThumb.src = item.cloudinary_url;
-                videoThumb.style.cssText = 'width:100%; height:100%; object-fit:cover;';
-                videoThumb.muted = true;
-                videoThumb.preload = 'metadata';
-                videoThumb.addEventListener('loadeddata', () => {
-                    videoThumb.currentTime = 1;
-                });
-                videoThumb.addEventListener('seeked', () => {
-                    videoThumb.pause();
-                });
-                thumb.appendChild(videoThumb);
+                const img = document.createElement('img');
+                img.src = thumbnailUrl(item.cloudinary_url, item.media_type);
+                img.alt = item.title;
+                img.style.cssText = 'width:100%; height:100%; object-fit:cover;';
+                thumb.appendChild(img);
                 // Play icon overlay
                 const icon = document.createElement('div');
                 icon.style.cssText = 'position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#fff; font-size:18px; pointer-events:none; text-shadow:0 0 4px #000;';
@@ -182,7 +176,6 @@ function buildCarousel(mediaItems, currentId) {
 
             thumb.addEventListener('click', () => {
                 showMedia(idx);
-                // Update active border
                 document.querySelectorAll('#thumbStrip > div').forEach((t, i) => {
                     t.style.border = i === idx ? '3px solid #000' : '2px solid transparent';
                 });
