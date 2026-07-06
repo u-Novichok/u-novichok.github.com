@@ -8,10 +8,11 @@
 </head>
     <script>
     (function() {
+        const id = new URLSearchParams(window.location.search).get('id');
         fetch('https://novichok-api.onrender.com/api/track/view', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ page: 'detail', media_id: new URLSearchParams(window.location.search).get('id') })
+            body: JSON.stringify({ page: 'detail', media_id:id ? parseInt(id) : null  })
         }).catch(()=>{});
     })();
     </script>
