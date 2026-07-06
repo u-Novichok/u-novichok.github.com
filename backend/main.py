@@ -28,6 +28,8 @@ try:
     app.include_router(share.router)
     app.include_router(groups.router)
     app.include_router(dashboard.router)
+    app.include_router(admin_users.router)
+    
     @app.get("/")
     def root():
         return {"status": "ok", "service": "Novichok API"}
