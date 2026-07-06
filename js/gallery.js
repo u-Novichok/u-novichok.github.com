@@ -2,13 +2,10 @@ import { fetchMedia } from './api.js';
 
 let autoRefreshInterval = null;
 
-// Helper: generate a transformed thumbnail URL
 function thumbnailUrl(originalUrl, mediaType) {
     if (!originalUrl) return '';
     if (mediaType === 'video') {
-        // For videos: use the first frame as thumbnail
-        return originalUrl.replace('/upload/', '/upload/so_1/')
-            .replace(/\.[^/.]+$/, '.jpg');
+        return originalUrl.replace('/upload/', '/upload/so_1/').replace(/\.[^/.]+$/, '.jpg');
     }
     return originalUrl.replace('/upload/', '/upload/c_fill,w_400,h_267,q_auto,f_auto/');
 }
@@ -82,7 +79,7 @@ function updateTimestamp() {
 
 function startAutoRefresh() {
     if (autoRefreshInterval) clearInterval(autoRefreshInterval);
-    autoRefreshInterval = setInterval(loadGallery, 60000); // 60 seconds
+    autoRefreshInterval = setInterval(loadGallery, 60000);
 }
 
 window.addEventListener('beforeunload', () => {
