@@ -12,28 +12,32 @@ def share_page(id: int):
         raise HTTPException(404, "Media not found")
     row = rows[0]
 
-    title = row[1] if row[1] else "Novichok Media"
+    # Full title (may be long)
+    full_title = row[1] if row[1] else "Novichok Media"
+    # Short title for social cards (max 60 chars)
+    short_title = (full_title[:57] + "...") if len(full_title) > 60 else full_title
+
     description = row[2] if row[2] else ""
+    # If description is missing, provide a fallback
+    if not description.strip():
+        description = "View this OSINT / defence image on Novichok."
+
+    og_description = (description[:197] + "...") if len(description) > 200 else description
+
     media_type = row[5] if len(row) > 5 else "image"
     original_url = row[7] if len(row) > 7 else ""
     page_url = f"https://u-novichok.github.io/image.html?id={id}"
 
-    # Truncate description to ~200 characters
-    og_description = (description[:197] + "...") if len(description) > 200 else description
-
-    # Build a 1200×630 thumbnail URL
+    # Build a proper 1200×630 thumbnail URL
     if media_type == "video":
-        # Grab first frame, crop to 1200×630, convert to JPG
         thumbnail_url = original_url.replace("/upload/", "/upload/so_1,c_fill,w_1200,h_630/")
         if thumbnail_url.endswith(".mp4"):
             thumbnail_url = thumbnail_url.rsplit(".", 1)[0] + ".jpg"
         elif not thumbnail_url.endswith(".jpg"):
             thumbnail_url += ".jpg"
     else:
-        # For images, simply crop to 1200×630
         thumbnail_url = original_url.replace("/upload/", "/upload/c_fill,w_1200,h_630/")
 
-    # Fallback if empty
     if not thumbnail_url:
         thumbnail_url = "https://via.placeholder.com/1200x630.png?text=No+Preview"
 
@@ -41,9 +45,9 @@ def share_page(id: int):
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>{title}</title>
+    <title>{short_title} — Novichok</title>
     <meta name="description" content="{og_description}">
-    <meta property="og:title" content="{title}">
+    <meta property="og:title" content="{short_title}">
     <meta property="og:description" content="{og_description}">
     <meta property="og:image" content="{thumbnail_url}">
     <meta property="og:image:width" content="1200">
@@ -52,11 +56,10 @@ def share_page(id: int):
     <meta property="og:type" content="article">
     <meta property="og:site_name" content="Novichok">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{title}">
+    <meta name="twitter:title" content="{short_title}">
     <meta name="twitter:description" content="{og_description}">
     <meta name="twitter:image" content="{thumbnail_url}">"""
 
-    # Add video tags only if it's a video
     if media_type == "video":
         html += f"""
     <meta property="og:video" content="{original_url}">
@@ -67,12 +70,13 @@ def share_page(id: int):
     <meta name="twitter:player:width" content="1280">
     <meta name="twitter:player:height" content="720">"""
 
+    # Use a 3‑second refresh so crawlers have time to read the meta tags
     html += f"""
-    <meta http-equiv="refresh" content="0;url={page_url}">
+    <meta http-equiv="refresh" content="3;url={page_url}">
 </head>
 <body>
-    <p>Redirecting to <a href="{page_url}">{title}</a>…</p>
+    <p>Redirecting to <a href="{page_url}">{full_title}</a>…</p>
 </body>
 </html>"""
-    
+
     return HTMLResponse(content=html)
