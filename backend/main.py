@@ -9,7 +9,7 @@ try:
     from database import get_db, Database
     import os
     from dotenv import load_dotenv
-    from routers import auth, media, admin, share
+    from routers import auth, media, admin, share ,groups 
     
     load_dotenv()
 
@@ -29,6 +29,7 @@ try:
     app.include_router(media.router)
     app.include_router(admin.router)
     app.include_router(share.router) 
+    app.include_router(groups.router)
     
     @app.get("/")
     def root():
