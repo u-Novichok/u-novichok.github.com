@@ -5,7 +5,7 @@ try:
     from fastapi import FastAPI
     from fastapi.middleware.cors import CORSMiddleware
     from setup import create_tables
-    from routers import auth, media, admin, share, groups ,admin_users, dashboard
+    from routers import auth, media, admin, share, groups, admin_users, stats
     from database import get_db, Database
     import os
     from dotenv import load_dotenv
@@ -14,6 +14,7 @@ try:
 
     app = FastAPI(title="Novichok API")
 
+    # CORS
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -22,14 +23,15 @@ try:
         allow_headers=["*"],
     )
 
+    # Routers
     app.include_router(auth.router)
     app.include_router(media.router)
     app.include_router(admin.router)
     app.include_router(share.router)
     app.include_router(groups.router)
-    app.include_router(dashboard.router)
     app.include_router(admin_users.router)
-    
+    app.include_router(stats.router)
+
     @app.get("/")
     def root():
         return {"status": "ok", "service": "Novichok API"}
