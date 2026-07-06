@@ -110,10 +110,9 @@
     </aside>
 
     <main class="main-content" id="mainContent">
-        <!-- Dashboard Tab (live data) -->
+        <!-- Dashboard Tab -->
         <div class="tab-section active" id="tab-dashboard">
             <h2 style="margin-bottom:25px;">Dashboard Overview</h2>
-            <!-- Real stats loaded by JS -->
             <div class="stats-grid" id="statsGrid"></div>
             <div class="stats-grid" id="visitorStatsGrid"></div>
             <div class="stats-grid" id="infraStatsGrid"></div>
@@ -126,19 +125,103 @@
             <div class="panel"><h3><i class="fas fa-chart-line"></i> Visitor Trend (Last 7 Days)</h3><canvas id="visitorChart" height="80"></canvas></div>
         </div>
 
-        <!-- Upload Tab (production ready, unchanged) -->
+        <!-- Upload Tab -->
         <div class="tab-section" id="tab-upload">
-            <!-- ... exactly the same as previous final version ... -->
+            <h2 style="margin-bottom:20px;">Upload Media</h2>
+            <div class="form-card">
+                <div id="uploadMessage"></div>
+                <form id="uploadForm">
+                    <div class="drop-zone" id="dropZone">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p><strong>Drag & drop files here</strong> or <span class="browse-btn">browse</span></p>
+                        <p style="font-size:13px; color:#888;">Accepted: JPG, PNG, WebP, MP4, WebM • Maximum size: <strong>10 MB</strong></p>
+                        <input type="file" id="fileInput" accept="image/*,video/*" style="display:none;">
+                    </div>
+                    <div id="filePreview" class="file-preview" style="display:none;">
+                        <div id="previewContainer"></div>
+                        <div class="file-info">
+                            <div class="file-name" id="fileName"></div>
+                            <div class="file-size" id="fileSize"></div>
+                        </div>
+                        <button type="button" class="remove-file" id="removeFile"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="progress-bar" id="progressBar" style="display:none;">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Title *</label><input type="text" id="title" required></div>
+                        <div class="form-group"><label>Category</label><input type="text" id="category" value="OSINT"></div>
+                    </div>
+                    <div class="form-group"><label>Description</label><textarea id="description" rows="3"></textarea></div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Country</label><input type="text" id="country"></div>
+                        <div class="form-group"><label>Source</label><input type="text" id="source"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Capture Date</label><input type="date" id="capture_date"></div>
+                        <div class="form-group"><label>Resolution</label><input type="text" id="resolution"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Tags (comma separated)</label><input type="text" id="tags" placeholder="e.g., tank, drone, ukraine"></div>
+                        <div class="form-group"><label>Group ID <span style="font-weight:400;color:#888;">(optional)</span></label><input type="number" id="parent_id" placeholder="Enter existing media ID"></div>
+                    </div>
+                    <div class="info-box">
+                        <strong>📌 Group ID explained</strong><br>
+                        Use this to <strong>link multiple media into one post</strong>. Enter the ID of an existing image/video to add this upload to the same group. Visitors will see all group members as a carousel on the detail page.<br><br>
+                        <strong>Possible combinations:</strong><br>
+                        • Image + Image → photo series<br>
+                        • Video + Video → multi‑clip post<br>
+                        • Image + Video → mixed media gallery<br>
+                        • Image + Image + Video → full mixed carousel<br><br>
+                        Leave empty for standalone media.
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block" id="uploadBtn">Upload Media</button>
+                </form>
+            </div>
         </div>
 
-        <!-- Manage Media Tab (production ready, unchanged) -->
+        <!-- Manage Media Tab -->
         <div class="tab-section" id="tab-manage">
-            <!-- ... exactly the same as previous final version ... -->
+            <h2 style="margin-bottom:20px;">Manage Media</h2>
+            <div id="manageMessage" class="message"></div>
+            <div style="overflow-x:auto;">
+                <table class="media-table" id="mediaTable">
+                    <thead><tr><th>Preview</th><th>Title</th><th>Type</th><th>Date</th><th>Actions</th></tr></thead>
+                    <tbody id="mediaTableBody">
+                        <tr><td colspan="5">Loading…</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        <!-- Manage Admins Tab (production ready, unchanged) -->
+        <!-- Manage Admins Tab -->
         <div class="tab-section" id="tab-admins">
-            <!-- ... exactly the same as previous final version ... -->
+            <h2 style="margin-bottom:20px;">Manage Admins</h2>
+            <div id="adminMessage" class="message"></div>
+            <div class="form-card" style="margin-bottom:30px;">
+                <h3>Add New Admin</h3>
+                <form id="addAdminForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Email *</label>
+                            <input type="email" id="newAdminEmail" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Password *</label>
+                            <input type="password" id="newAdminPassword" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Create Admin</button>
+                </form>
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="media-table" id="adminTable">
+                    <thead><tr><th>Email</th><th>Role</th><th>Created</th></tr></thead>
+                    <tbody id="adminTableBody">
+                        <tr><td colspan="3">Loading…</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <!-- View Library Tab -->
@@ -191,16 +274,15 @@
             window.location.href = 'login.html';
         }
 
-        // ================== DASHBOARD LIVE DATA ==================
+        // ================== DASHBOARD ==================
         async function loadDashboard() {
             try {
                 const res = await fetch(`${API_BASE}/admin/dashboard`, {
                     headers: { 'Authorization': 'Bearer ' + token }
                 });
-                if (!res.ok) throw new Error('Failed to load dashboard');
+                if (!res.ok) throw new Error('Failed');
                 const data = await res.json();
 
-                // Build stat cards
                 document.getElementById('statsGrid').innerHTML = `
                     <div class="stat-card"><div class="stat-icon" style="background:#4caf50;"><i class="fas fa-image"></i></div><div class="stat-info"><h3>Total Images</h3><div class="value">${data.total_images}</div><div class="sub">live count</div></div></div>
                     <div class="stat-card"><div class="stat-icon" style="background:#ff9800;"><i class="fas fa-video"></i></div><div class="stat-info"><h3>Total Videos</h3><div class="value">${data.total_videos}</div><div class="sub">live count</div></div></div>
@@ -208,7 +290,6 @@
                     <div class="stat-card"><div class="stat-icon" style="background:#9c27b0;"><i class="fas fa-hdd"></i></div><div class="stat-info"><h3>Total Media</h3><div class="value">${data.total_media}</div><div class="sub">images + videos</div></div></div>
                 `;
 
-                // Visitor & share stats (placeholder – requires tracking tables)
                 document.getElementById('visitorStatsGrid').innerHTML = `
                     <div class="stat-card"><div class="stat-icon" style="background:#e91e63;"><i class="fas fa-users"></i></div><div class="stat-info"><h3>Visitors Today</h3><div class="value">342</div><div class="sub">placeholder</div></div></div>
                     <div class="stat-card"><div class="stat-icon" style="background:#00bcd4;"><i class="fas fa-calendar-week"></i></div><div class="stat-info"><h3>This Month</h3><div class="value">4,589</div><div class="sub">placeholder</div></div></div>
@@ -216,7 +297,6 @@
                     <div class="stat-card"><div class="stat-icon" style="background:#607d8b;"><i class="fas fa-share-alt"></i></div><div class="stat-info"><h3>Total Shares</h3><div class="value">8,742</div><div class="sub">placeholder</div></div></div>
                 `;
 
-                // Infrastructure stats (partially live)
                 document.getElementById('infraStatsGrid').innerHTML = `
                     <div class="stat-card"><div class="stat-icon" style="background:#000;"><i class="fas fa-server"></i></div><div class="stat-info"><h3>Render Status</h3><div class="value" style="color:green;">${data.render_status}</div><div class="sub">uptime 99.8%</div></div></div>
                     <div class="stat-card"><div class="stat-icon" style="background:#666;"><i class="fas fa-clock"></i></div><div class="stat-info"><h3>API Calls</h3><div class="value">—</div><div class="sub">add tracking</div></div></div>
@@ -224,36 +304,275 @@
                     <div class="stat-card"><div class="stat-icon" style="background:#f6821f;"><i class="fas fa-chart-bar"></i></div><div class="stat-info"><h3>D1 Requests</h3><div class="value">${data.d1_requests_monthly.toLocaleString()}</div><div class="sub">placeholder</div></div></div>
                 `;
 
-                // Charts (mock data – replace with real analytics later)
                 initCharts();
             } catch (err) {
                 document.getElementById('statsGrid').innerHTML = '<p>Failed to load dashboard data.</p>';
             }
         }
-
-        // Initialize dashboard on first load
         loadDashboard();
 
-        // ================== UPLOAD LOGIC (same as before) ==================
-        // ... keep your existing upload code (drop zone, file preview, progress bar, fetch to /admin/upload) ...
-        // [insert the full upload code from previous final version]
+        // ================== UPLOAD ==================
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const filePreview = document.getElementById('filePreview');
+        const previewContainer = document.getElementById('previewContainer');
+        const fileNameEl = document.getElementById('fileName');
+        const fileSizeEl = document.getElementById('fileSize');
+        const removeFileBtn = document.getElementById('removeFile');
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = document.getElementById('progressFill');
+        const uploadMessage = document.getElementById('uploadMessage');
+        let selectedFile = null;
 
-        // ================== MANAGE MEDIA TAB ==================
-        async function loadManageTab() {
-            // ... keep your existing manage code (fetch /media, display table, delete) ...
-        }
-        window.editMedia = id => alert('Edit coming soon for ID ' + id);
-        window.deleteMedia = async id => { /* ... keep delete logic ... */ };
-
-        // ================== MANAGE ADMINS TAB ==================
-        async function loadAdminsTab() {
-            // ... keep your existing admins code (fetch /admin/users, add admin) ...
-        }
-        document.getElementById('addAdminForm')?.addEventListener('submit', async (e) => {
-            // ... keep admin creation logic ...
+        dropZone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', handleFileSelect);
+        dropZone.addEventListener('dragover', e => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', e => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                handleFileSelect();
+            }
         });
 
-        // ================== CHARTS (mock) ==================
+        function handleFileSelect() {
+            const file = fileInput.files[0];
+            if (!file) return;
+            if (file.size > 10 * 1024 * 1024) {
+                showUploadMessage('File exceeds 10 MB limit. Please compress or choose a smaller file.', 'error');
+                resetFile();
+                return;
+            }
+            selectedFile = file;
+            fileNameEl.textContent = file.name;
+            fileSizeEl.textContent = formatBytes(file.size);
+            dropZone.style.display = 'none';
+            filePreview.style.display = 'flex';
+            previewContainer.innerHTML = '';
+            if (file.type.startsWith('image/')) {
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(file);
+                previewContainer.appendChild(img);
+            } else if (file.type.startsWith('video/')) {
+                const video = document.createElement('video');
+                video.src = URL.createObjectURL(file);
+                video.controls = false;
+                video.muted = true;
+                video.preload = 'metadata';
+                video.onloadeddata = () => video.currentTime = 1;
+                video.onseeked = () => video.pause();
+                previewContainer.appendChild(video);
+            }
+        }
+
+        function resetFile() {
+            selectedFile = null;
+            fileInput.value = '';
+            dropZone.style.display = 'block';
+            filePreview.style.display = 'none';
+            previewContainer.innerHTML = '';
+            fileNameEl.textContent = '';
+            fileSizeEl.textContent = '';
+            progressBar.style.display = 'none';
+            progressFill.style.width = '0%';
+        }
+
+        removeFileBtn.addEventListener('click', resetFile);
+
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!selectedFile) {
+                showUploadMessage('Please select a file.', 'error');
+                return;
+            }
+            uploadMessage.textContent = '';
+            progressBar.style.display = 'block';
+            progressFill.style.width = '0%';
+            let fakeWidth = 0;
+            const interval = setInterval(() => {
+                if (fakeWidth < 90) {
+                    fakeWidth += Math.random() * 15 + 5;
+                    if (fakeWidth > 90) fakeWidth = 90;
+                    progressFill.style.width = fakeWidth + '%';
+                }
+            }, 250);
+
+            const formData = new FormData();
+            formData.append('title', document.getElementById('title').value);
+            formData.append('description', document.getElementById('description').value);
+            formData.append('category', document.getElementById('category').value);
+            formData.append('country', document.getElementById('country').value);
+            formData.append('source', document.getElementById('source').value);
+            formData.append('capture_date', document.getElementById('capture_date').value);
+            formData.append('resolution', document.getElementById('resolution').value);
+            formData.append('tags', document.getElementById('tags').value);
+            formData.append('file', selectedFile);
+            const parentId = document.getElementById('parent_id').value;
+            if (parentId) formData.append('parent_id', parentId);
+
+            try {
+                const res = await fetch(`${API_BASE}/admin/upload`, {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token },
+                    body: formData
+                });
+                clearInterval(interval);
+                progressFill.style.width = '100%';
+                const data = await res.json();
+                if (res.ok) {
+                    showUploadMessage(`✅ Uploaded! ID: ${data.id} — ${data.url}`, 'success');
+                    resetFile();
+                } else {
+                    showUploadMessage('Error: ' + (data.detail || 'Upload failed'), 'error');
+                }
+            } catch (err) {
+                clearInterval(interval);
+                showUploadMessage('Network error. Please try again.', 'error');
+            } finally {
+                setTimeout(() => { progressBar.style.display = 'none'; }, 1200);
+            }
+        });
+
+        function showUploadMessage(msg, type) {
+            uploadMessage.textContent = msg;
+            uploadMessage.className = 'message message-' + type;
+        }
+
+        function formatBytes(bytes) {
+            if (!bytes) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // ================== MANAGE MEDIA ==================
+        async function loadManageTab() {
+            const tbody = document.getElementById('mediaTableBody');
+            tbody.innerHTML = '<tr><td colspan="5">Loading…</td></tr>';
+            try {
+                const res = await fetch(`${API_BASE}/media?limit=50`);
+                const data = await res.json();
+                const items = data.items || data;
+                if (!items || items.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5">No media found.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = '';
+                items.forEach(item => {
+                    const tr = document.createElement('tr');
+                    const thumb = item.media_type === 'video'
+                        ? `<video src="${item.cloudinary_url}" style="width:60px;height:45px;object-fit:cover;border-radius:4px;" muted></video>`
+                        : `<img src="${item.cloudinary_url}" style="width:60px;height:45px;object-fit:cover;border-radius:4px;">`;
+                    tr.innerHTML = `
+                        <td>${thumb}</td>
+                        <td>${item.title}</td>
+                        <td>${item.media_type || 'image'}</td>
+                        <td>${item.uploaded_at || item.capture_date || '—'}</td>
+                        <td>
+                            <button class="btn btn-outline" style="margin-right:5px;" onclick="editMedia(${item.id})">Edit</button>
+                            <button class="btn btn-danger" onclick="deleteMedia(${item.id})">Delete</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="5">Failed to load.</td></tr>';
+            }
+        }
+
+        window.editMedia = id => alert('Edit functionality coming soon for ID ' + id);
+        window.deleteMedia = async id => {
+            if (!confirm('Delete this media permanently?')) return;
+            const manageMsg = document.getElementById('manageMessage');
+            try {
+                const res = await fetch(`${API_BASE}/admin/media/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (res.ok) {
+                    manageMsg.textContent = 'Deleted successfully.';
+                    manageMsg.className = 'message message-success';
+                    loadManageTab();
+                } else {
+                    const err = await res.json();
+                    manageMsg.textContent = 'Error: ' + err.detail;
+                    manageMsg.className = 'message message-error';
+                }
+            } catch (err) {
+                manageMsg.textContent = 'Network error.';
+                manageMsg.className = 'message message-error';
+            }
+        };
+
+        // ================== MANAGE ADMINS ==================
+        async function loadAdminsTab() {
+            const tbody = document.getElementById('adminTableBody');
+            tbody.innerHTML = '<tr><td colspan="3">Loading…</td></tr>';
+            try {
+                const res = await fetch(`${API_BASE}/admin/users`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (!res.ok) throw new Error('Failed');
+                const users = await res.json();
+                if (users.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3">No admin users found.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = '';
+                users.forEach(user => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${user.email}</td>
+                        <td>${user.role || 'admin'}</td>
+                        <td>${user.created_at ? new Date(user.created_at).toLocaleDateString() : '—'}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="3">Failed to load admins.</td></tr>';
+            }
+        }
+
+        document.getElementById('addAdminForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('newAdminEmail').value;
+            const password = document.getElementById('newAdminPassword').value;
+            const msgDiv = document.getElementById('adminMessage');
+            msgDiv.textContent = '';
+            msgDiv.className = 'message';
+
+            try {
+                const res = await fetch(`${API_BASE}/admin/users`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    msgDiv.textContent = 'Admin created successfully.';
+                    msgDiv.className = 'message message-success';
+                    document.getElementById('addAdminForm').reset();
+                    loadAdminsTab();
+                } else {
+                    msgDiv.textContent = 'Error: ' + (data.detail || 'Unknown error');
+                    msgDiv.className = 'message message-error';
+                }
+            } catch (err) {
+                msgDiv.textContent = 'Network error.';
+                msgDiv.className = 'message message-error';
+            }
+        });
+
+        // ================== CHARTS ==================
         function initCharts() {
             const ctx1 = document.getElementById('topMediaChart');
             if (ctx1 && !ctx1.chart) {
@@ -261,14 +580,9 @@
                     type: 'bar',
                     data: {
                         labels: ['T-90M', 'PAF Vid', 'Sevastopol', 'HIMARS', 'Drone'],
-                        datasets: [{
-                            label: 'Views',
-                            data: [3400, 2890, 2200, 1800, 1650],
-                            backgroundColor: '#000',
-                            borderRadius: 4
-                        }]
+                        datasets: [{ label: 'Views', data: [3400,2890,2200,1800,1650], backgroundColor:'#000' }]
                     },
-                    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+                    options: { responsive:true, plugins:{legend:{display:false}} }
                 });
             }
             const ctx2 = document.getElementById('visitorChart');
@@ -276,18 +590,10 @@
                 new Chart(ctx2, {
                     type: 'line',
                     data: {
-                        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                        datasets: [{
-                            label: 'Visitors',
-                            data: [380, 420, 450, 390, 480, 520, 342],
-                            borderColor: '#000',
-                            backgroundColor: 'rgba(0,0,0,0.05)',
-                            fill: true,
-                            tension: 0.3,
-                            pointBackgroundColor: '#000'
-                        }]
+                        labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+                        datasets: [{ label:'Visitors', data:[380,420,450,390,480,520,342], borderColor:'#000', backgroundColor:'rgba(0,0,0,0.05)', fill:true, tension:0.3 }]
                     },
-                    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+                    options: { responsive:true, plugins:{legend:{display:false}} }
                 });
             }
         }
