@@ -25,6 +25,15 @@
             <p>Loading images…</p>
         </div>
     </main>
+    <script>
+    (function() {
+        fetch('https://novichok-api.onrender.com/api/track/view', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ page: 'gallery' })
+        }).catch(()=>{});
+    })();
+    </script>
 
     <!-- Load the gallery script -->
     <script type="module" src="js/gallery.js"></script>
