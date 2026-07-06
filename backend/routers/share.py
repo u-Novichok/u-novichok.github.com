@@ -1,23 +1,9 @@
+
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import HTMLResponse
 from database import get_db
 
 router = APIRouter()
-
-@router.get("/debug/{id}")
-def debug_share(id: int):
-    db = get_db()
-    rows = db.execute("SELECT * FROM media WHERE id = ?", (id,)).fetchall()
-    if not rows:
-        raise HTTPException(404, "Media not found")
-    row = rows[0]
-    return {
-        "id": row[0],
-        "title": row[1],
-        "description": row[2],
-        "media_type": row[5] if len(row) > 5 else "unknown",
-        "cloudinary_url": row[7] if len(row) > 7 else "unknown",
-    }
 
 @router.get("/share/{id}", response_class=HTMLResponse)
 def share_page(id: int):
@@ -55,8 +41,7 @@ def share_page(id: int):
     <meta name="twitter:title" content="{title}">
     <meta name="twitter:description" content="{description}">
     <meta name="twitter:image" content="{image_url}">"""
-    
-    # Video support
+
     if media_type == "video":
         html += f"""
     <meta property="og:video" content="{image_url}">
@@ -67,7 +52,7 @@ def share_page(id: int):
     <meta name="twitter:player" content="{image_url}">
     <meta name="twitter:player:width" content="1280">
     <meta name="twitter:player:height" content="720">"""
-    
+
     html += f"""
     <meta http-equiv="refresh" content="0;url={page_url}">
 </head>
