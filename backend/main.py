@@ -30,7 +30,8 @@ try:
     app.include_router(share.router)
     app.include_router(groups.router)
     app.include_router(admin_users.router)
-    app.include_router(stats.router)
+    app.include_router(stats.public_router)   # public tracking
+    app.include_router(stats.admin_router)    # admin stats
 
     @app.get("/")
     def root():
