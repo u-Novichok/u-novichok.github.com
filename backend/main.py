@@ -1,21 +1,19 @@
 import sys
 import traceback
-# Force deploy v2
+
 try:
     from fastapi import FastAPI
     from fastapi.middleware.cors import CORSMiddleware
     from setup import create_tables
-    from routers import auth, media, admin
+    from routers import auth, media, admin, share, groups
     from database import get_db, Database
     import os
     from dotenv import load_dotenv
-    from routers import auth, media, admin, share ,groups 
-    
+
     load_dotenv()
 
     app = FastAPI(title="Novichok API")
 
-    # CORS – allow your frontend
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -24,13 +22,12 @@ try:
         allow_headers=["*"],
     )
 
-    # Include route modules
     app.include_router(auth.router)
     app.include_router(media.router)
     app.include_router(admin.router)
-    app.include_router(share.router) 
+    app.include_router(share.router)
     app.include_router(groups.router)
-    
+
     @app.get("/")
     def root():
         return {"status": "ok", "service": "Novichok API"}
