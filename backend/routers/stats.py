@@ -3,11 +3,10 @@ from database import get_db
 from utils.security import get_current_admin
 from datetime import datetime
 
-router = APIRouter(prefix="/api", tags=["stats"])
+# ───── PUBLIC TRACKING ROUTER (no auth) ─────
+public_router = APIRouter(prefix="/api", tags=["tracking"])
 
-# ───── PUBLIC TRACKING (no auth) ─────
-
-@router.post("/track/view")
+@public_router.post("/track/view")
 async def track_view(request: Request):
     body = await request.json() if request.headers.get("content-type") == "application/json" else {}
     page = body.get("page", "unknown")
@@ -16,7 +15,7 @@ async def track_view(request: Request):
     db.execute("INSERT INTO page_views (page, media_id) VALUES (?, ?)", (page, media_id))
     return {"status": "ok"}
 
-@router.post("/track/share")
+@public_router.post("/track/share")
 async def track_share(request: Request):
     body = await request.json()
     media_id = body.get("media_id")
@@ -26,7 +25,7 @@ async def track_share(request: Request):
     db.execute("INSERT INTO shares (media_id) VALUES (?)", (media_id,))
     return {"status": "ok"}
 
-@router.post("/track/media-view")
+@public_router.post("/track/media-view")
 async def track_media_view(request: Request):
     body = await request.json()
     media_id = body.get("media_id")
@@ -37,9 +36,10 @@ async def track_media_view(request: Request):
     return {"status": "ok"}
 
 
-# ───── ADMIN STATS (JWT protected) ─────
+# ───── ADMIN STATS ROUTER (JWT protected) ─────
+admin_router = APIRouter(prefix="/admin", tags=["admin_stats"])
 
-@router.get("/admin/stats")
+@admin_router.get("/stats")
 def get_admin_stats(admin = Depends(get_current_admin)):
     db = get_db()
 
