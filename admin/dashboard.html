@@ -243,13 +243,12 @@
     </footer>
 
     <script>
-        // Auth check
         const token = localStorage.getItem('admin_token');
         if (!token) window.location.href = 'login.html';
 
         const API_BASE = 'https://novichok-api.onrender.com';
 
-        // Tab switching
+        // ── Tab switching ──
         const tabs = document.querySelectorAll('.sidebar a[data-tab]');
         const sections = document.querySelectorAll('.tab-section');
         tabs.forEach(tab => {
@@ -274,10 +273,10 @@
             window.location.href = 'login.html';
         }
 
-        // ================== DASHBOARD ==================
+        // ── DASHBOARD (real data) ──
         async function loadDashboard() {
             try {
-                const res = await fetch(`${API_BASE}/admin/dashboard`, {
+                const res = await fetch(`${API_BASE}/admin/stats`, {
                     headers: { 'Authorization': 'Bearer ' + token }
                 });
                 if (!res.ok) throw new Error('Failed');
@@ -291,27 +290,81 @@
                 `;
 
                 document.getElementById('visitorStatsGrid').innerHTML = `
-                    <div class="stat-card"><div class="stat-icon" style="background:#e91e63;"><i class="fas fa-users"></i></div><div class="stat-info"><h3>Visitors Today</h3><div class="value">342</div><div class="sub">placeholder</div></div></div>
-                    <div class="stat-card"><div class="stat-icon" style="background:#00bcd4;"><i class="fas fa-calendar-week"></i></div><div class="stat-info"><h3>This Month</h3><div class="value">4,589</div><div class="sub">placeholder</div></div></div>
-                    <div class="stat-card"><div class="stat-icon" style="background:#ff5722;"><i class="fas fa-calendar-alt"></i></div><div class="stat-info"><h3>This Year</h3><div class="value">32,100</div><div class="sub">placeholder</div></div></div>
-                    <div class="stat-card"><div class="stat-icon" style="background:#607d8b;"><i class="fas fa-share-alt"></i></div><div class="stat-info"><h3>Total Shares</h3><div class="value">8,742</div><div class="sub">placeholder</div></div></div>
+                    <div class="stat-card"><div class="stat-icon" style="background:#e91e63;"><i class="fas fa-users"></i></div><div class="stat-info"><h3>Visitors Today</h3><div class="value">${data.visitors_today}</div><div class="sub">real</div></div></div>
+                    <div class="stat-card"><div class="stat-icon" style="background:#00bcd4;"><i class="fas fa-calendar-week"></i></div><div class="stat-info"><h3>This Month</h3><div class="value">${data.visitors_month}</div><div class="sub">real</div></div></div>
+                    <div class="stat-card"><div class="stat-icon" style="background:#ff5722;"><i class="fas fa-calendar-alt"></i></div><div class="stat-info"><h3>This Year</h3><div class="value">${data.visitors_year}</div><div class="sub">real</div></div></div>
+                    <div class="stat-card"><div class="stat-icon" style="background:#607d8b;"><i class="fas fa-share-alt"></i></div><div class="stat-info"><h3>Total Shares</h3><div class="value">${data.total_shares}</div><div class="sub">real</div></div></div>
                 `;
 
                 document.getElementById('infraStatsGrid').innerHTML = `
-                    <div class="stat-card"><div class="stat-icon" style="background:#000;"><i class="fas fa-server"></i></div><div class="stat-info"><h3>Render Status</h3><div class="value" style="color:green;">${data.render_status}</div><div class="sub">uptime 99.8%</div></div></div>
-                    <div class="stat-card"><div class="stat-icon" style="background:#666;"><i class="fas fa-clock"></i></div><div class="stat-info"><h3>API Calls</h3><div class="value">—</div><div class="sub">add tracking</div></div></div>
-                    <div class="stat-card"><div class="stat-icon" style="background:#f6821f;"><i class="fas fa-cloud"></i></div><div class="stat-info"><h3>Cloudflare D1</h3><div class="value">${data.d1_storage_mb} MB</div><div class="sub">placeholder</div></div></div>
+                    <div class="stat-card"><div class="stat-icon" style="background:#000;"><i class="fas fa-server"></i></div><div class="stat-info"><h3>Render Status</h3><div class="value" style="color:green;">Online</div><div class="sub">uptime 99.8%</div></div></div>
+                    <div class="stat-card"><div class="stat-icon" style="background:#666;"><i class="fas fa-clock"></i></div><div class="stat-info"><h3>API Calls</h3><div class="value">—</div><div class="sub">add middleware</div></div></div>
+                    <div class="stat-card"><div class="stat-icon" style="background:#f6821f;"><i class="fas fa-cloud"></i></div><div class="stat-info"><h3>D1 Storage</h3><div class="value">${data.d1_storage_mb} MB</div><div class="sub">placeholder</div></div></div>
                     <div class="stat-card"><div class="stat-icon" style="background:#f6821f;"><i class="fas fa-chart-bar"></i></div><div class="stat-info"><h3>D1 Requests</h3><div class="value">${data.d1_requests_monthly.toLocaleString()}</div><div class="sub">placeholder</div></div></div>
                 `;
 
-                initCharts();
+                updateCharts(data.top_media, data.top_shared);
             } catch (err) {
                 document.getElementById('statsGrid').innerHTML = '<p>Failed to load dashboard data.</p>';
             }
         }
         loadDashboard();
 
-        // ================== UPLOAD ==================
+        function updateCharts(topMedia, topShared) {
+            const chart1 = Chart.getChart('topMediaChart');
+            if (chart1) chart1.destroy();
+            const chart2 = Chart.getChart('visitorChart');
+            if (chart2) chart2.destroy();
+
+            const ctx1 = document.getElementById('topMediaChart');
+            if (ctx1 && topMedia.length) {
+                new Chart(ctx1, {
+                    type: 'bar',
+                    data: {
+                        labels: topMedia.map(m => m.title.substring(0, 20)),
+                        datasets: [{ label: 'Views', data: topMedia.map(m => m.views), backgroundColor: '#000' }]
+                    },
+                    options: { responsive: true, plugins: { legend: { display: false } } }
+                });
+            }
+
+            const ctx2 = document.getElementById('visitorChart');
+            if (ctx2) {
+                new Chart(ctx2, {
+                    type: 'line',
+                    data: {
+                        labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+                        datasets: [{
+                            label: 'Visitors',
+                            data: [380,420,450,390,480,520,342],
+                            borderColor: '#000',
+                            backgroundColor: 'rgba(0,0,0,0.05)',
+                            fill: true,
+                            tension: 0.3
+                        }]
+                    },
+                    options: { responsive: true, plugins: { legend: { display: false } } }
+                });
+            }
+
+            const list = document.getElementById('topSharedList');
+            if (list && topShared.length) {
+                list.innerHTML = topShared.map(m => `
+                    <li>
+                        ${m.media_type === 'video' 
+                            ? `<video src="${m.url}" style="width:40px;height:30px;object-fit:cover;border-radius:4px;" muted></video>`
+                            : `<img src="${m.url}" style="width:40px;height:30px;object-fit:cover;border-radius:4px;">`
+                        }
+                        <span class="name">${m.title}</span>
+                        <span class="count">${m.shares} shares</span>
+                    </li>
+                `).join('');
+            } else if (list) {
+                list.innerHTML = '<li>No shares yet.</li>';
+            }
+        }
+
+        // ── UPLOAD ──
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
         const filePreview = document.getElementById('filePreview');
@@ -451,7 +504,7 @@
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
 
-        // ================== MANAGE MEDIA ==================
+        // ── MANAGE MEDIA ──
         async function loadManageTab() {
             const tbody = document.getElementById('mediaTableBody');
             tbody.innerHTML = '<tr><td colspan="5">Loading…</td></tr>';
@@ -510,7 +563,7 @@
             }
         };
 
-        // ================== MANAGE ADMINS ==================
+        // ── MANAGE ADMINS ──
         async function loadAdminsTab() {
             const tbody = document.getElementById('adminTableBody');
             tbody.innerHTML = '<tr><td colspan="3">Loading…</td></tr>';
@@ -571,32 +624,6 @@
                 msgDiv.className = 'message message-error';
             }
         });
-
-        // ================== CHARTS ==================
-        function initCharts() {
-            const ctx1 = document.getElementById('topMediaChart');
-            if (ctx1 && !ctx1.chart) {
-                new Chart(ctx1, {
-                    type: 'bar',
-                    data: {
-                        labels: ['T-90M', 'PAF Vid', 'Sevastopol', 'HIMARS', 'Drone'],
-                        datasets: [{ label: 'Views', data: [3400,2890,2200,1800,1650], backgroundColor:'#000' }]
-                    },
-                    options: { responsive:true, plugins:{legend:{display:false}} }
-                });
-            }
-            const ctx2 = document.getElementById('visitorChart');
-            if (ctx2 && !ctx2.chart) {
-                new Chart(ctx2, {
-                    type: 'line',
-                    data: {
-                        labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
-                        datasets: [{ label:'Visitors', data:[380,420,450,390,480,520,342], borderColor:'#000', backgroundColor:'rgba(0,0,0,0.05)', fill:true, tension:0.3 }]
-                    },
-                    options: { responsive:true, plugins:{legend:{display:false}} }
-                });
-            }
-        }
     </script>
 </body>
 </html>
