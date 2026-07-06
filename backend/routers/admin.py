@@ -17,8 +17,8 @@ async def upload_media(
     admin = Depends(get_current_admin)
 ):
     contents = await file.read()
-    if not file.content_type.startswith("image/"):
-        raise HTTPException(400, "Only image files are allowed")
+    if not (file.content_type.startswith("image/") or file.content_type.startswith("video/")):
+        raise HTTPException(400, "Only image and video files are allowed")
     try:
         public_id, secure_url = upload_image(contents, folder="novichok")
     except Exception as e:
@@ -28,9 +28,11 @@ async def upload_media(
     db_id = None
     try:
         db = get_db()
+        detected_type = "video" if file.content_type.startswith("video/") else "image"
+
         db.execute(
-            "INSERT INTO media (title, description, category, tags, media_type, cloudinary_public_id, cloudinary_url) VALUES (?,?,?,?,?,?,?)",
-            (title, description, category, tags, "image", public_id, secure_url)
+             "INSERT INTO media (title, description, category, tags, media_type, cloudinary_public_id, cloudinary_url) VALUES (?,?,?,?,?,?,?)",
+              (title, description, category, tags, detected_type, public_id, secure_url)
         )
         db_id = db.last_row_id
         print(f"Inserted media with id: {db_id}")
