@@ -1,16 +1,20 @@
-=import { fetchMediaById, fetchMedia } from './api.js';
+import { fetchMediaById, fetchMedia } from './api.js';
 
 const urlParams = new URLSearchParams(window.location.search);
 const imageId = parseInt(urlParams.get('id')) || 1;
 
 // Helpers for URL transformations
-function displayUrl(originalUrl) {
+function displayUrl(originalUrl, mediaType) {
     if (!originalUrl) return '';
+    if (mediaType === 'video') return originalUrl; // Don't transform videos
     return originalUrl.replace('/upload/', '/upload/q_auto,f_auto,w_1200/');
 }
 
-function thumbnailUrl(originalUrl) {
+function thumbnailUrl(originalUrl, mediaType) {
     if (!originalUrl) return '';
+    if (mediaType === 'video') {
+        return originalUrl.replace('/upload/', '/upload/c_fill,w_400,h_267,q_auto,f_auto,so_1/');
+    }
     return originalUrl.replace('/upload/', '/upload/c_fill,w_400,h_267,q_auto,f_auto/');
 }
 
@@ -43,7 +47,7 @@ function showDownloadPopup(imageUrl, title, callback) {
         <p style="margin-bottom: 20px; color: #555; font-size: 0.95rem;">
             Each download uses our limited bandwidth. You can help us by
             <strong>copying the link</strong> and sharing it instead.<br>
-            The image will stay available online.
+            The media will stay available online.
         </p>
         <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
             <button id="popupCopyBtn" style="
@@ -109,12 +113,15 @@ function buildCarousel(mediaItems, currentId) {
     let currentIndex = mediaItems.findIndex(m => m.id === currentId);
     if (currentIndex < 0) currentIndex = 0;
 
+    // Remove old thumb strip if exists
+    const oldStrip = document.getElementById('thumbStrip');
+    if (oldStrip) oldStrip.remove();
+
     function showMedia(index) {
         const item = mediaItems[index];
         detailWrap.innerHTML = '';
 
         if (item.media_type === 'video') {
-            // Display video
             const video = document.createElement('video');
             video.src = item.cloudinary_url;
             video.controls = true;
@@ -122,9 +129,8 @@ function buildCarousel(mediaItems, currentId) {
             video.style.cssText = 'width:100%; max-height:560px; background:#000;';
             detailWrap.appendChild(video);
         } else {
-            // Display image
             const img = document.createElement('img');
-            img.src = displayUrl(item.cloudinary_url);
+            img.src = displayUrl(item.cloudinary_url, item.media_type);
             img.alt = item.title;
             img.className = 'detail-img';
             img.loading = 'lazy';
@@ -134,47 +140,58 @@ function buildCarousel(mediaItems, currentId) {
 
     showMedia(currentIndex);
 
-    // ── Thumbnail Strip (below main media) ──
-    const thumbStrip = document.createElement('div');
-    thumbStrip.style.cssText = 'display:flex; gap:8px; margin-top:12px; overflow-x:auto; padding:8px 0;';
-    
-    mediaItems.forEach((item, idx) => {
-        const thumb = document.createElement('div');
-        thumb.style.cssText = `
-            width:80px; height:60px; flex-shrink:0; cursor:pointer;
-            border: ${idx === currentIndex ? '3px solid #000' : '2px solid transparent'};
-            border-radius:6px; overflow:hidden;
-        `;
+    // Thumbnail strip (only if multiple items)
+    if (mediaItems.length > 1) {
+        const thumbStrip = document.createElement('div');
+        thumbStrip.id = 'thumbStrip';
+        thumbStrip.style.cssText = 'display:flex; gap:8px; margin-top:12px; overflow-x:auto; padding:8px 0;';
+        
+        mediaItems.forEach((item, idx) => {
+            const thumb = document.createElement('div');
+            thumb.style.cssText = `
+                width:80px; height:60px; flex-shrink:0; cursor:pointer;
+                border: ${idx === currentIndex ? '3px solid #000' : '2px solid transparent'};
+                border-radius:6px; overflow:hidden; position:relative;
+            `;
 
-        if (item.media_type === 'video') {
-            // Video thumbnail – show a placeholder or video first frame
-            const videoThumb = document.createElement('video');
-            videoThumb.src = item.cloudinary_url;
-            videoThumb.style.cssText = 'width:100%; height:100%; object-fit:cover;';
-            videoThumb.muted = true;
-            videoThumb.preload = 'metadata';
-            // Show first frame
-            videoThumb.addEventListener('loadeddata', () => {
-                videoThumb.currentTime = 1;
+            if (item.media_type === 'video') {
+                const videoThumb = document.createElement('video');
+                videoThumb.src = item.cloudinary_url;
+                videoThumb.style.cssText = 'width:100%; height:100%; object-fit:cover;';
+                videoThumb.muted = true;
+                videoThumb.preload = 'metadata';
+                videoThumb.addEventListener('loadeddata', () => {
+                    videoThumb.currentTime = 1;
+                });
+                videoThumb.addEventListener('seeked', () => {
+                    videoThumb.pause();
+                });
+                thumb.appendChild(videoThumb);
+                // Play icon overlay
+                const icon = document.createElement('div');
+                icon.style.cssText = 'position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#fff; font-size:18px; pointer-events:none; text-shadow:0 0 4px #000;';
+                icon.textContent = '▶';
+                thumb.appendChild(icon);
+            } else {
+                const img = document.createElement('img');
+                img.src = thumbnailUrl(item.cloudinary_url, item.media_type);
+                img.alt = item.title;
+                img.style.cssText = 'width:100%; height:100%; object-fit:cover;';
+                thumb.appendChild(img);
+            }
+
+            thumb.addEventListener('click', () => {
+                showMedia(idx);
+                // Update active border
+                document.querySelectorAll('#thumbStrip > div').forEach((t, i) => {
+                    t.style.border = i === idx ? '3px solid #000' : '2px solid transparent';
+                });
             });
-            // Pause after seeking
-            videoThumb.addEventListener('seeked', () => {
-                videoThumb.pause();
-            });
-            thumb.appendChild(videoThumb);
-        } else {
-            const img = document.createElement('img');
-            img.src = thumbnailUrl(item.cloudinary_url);
-            img.alt = item.title;
-            img.style.cssText = 'width:100%; height:100%; object-fit:cover;';
-            thumb.appendChild(img);
-        }
+            thumbStrip.appendChild(thumb);
+        });
 
-        thumb.addEventListener('click', () => showMedia(idx));
-        thumbStrip.appendChild(thumb);
-    });
-
-    detailWrap.parentNode.insertBefore(thumbStrip, detailWrap.nextSibling);
+        detailWrap.parentNode.insertBefore(thumbStrip, detailWrap.nextSibling);
+    }
 }
 
 // ──────────────── MAIN PAGE LOAD ────────────────
@@ -183,7 +200,7 @@ async function loadDetail() {
         const img = await fetchMediaById(imageId);
         document.title = `${img.title} — Novichok`;
 
-        // Fetch group (siblings + parent) if parent_id exists
+        // Fetch group if parent_id exists
         let mediaItems = [img];
         if (img.parent_id) {
             try {
@@ -193,7 +210,7 @@ async function loadDetail() {
                     mediaItems = groupData.items;
                 }
             } catch (e) {
-                // If group fetch fails, just show single image
+                // If group fetch fails, show single media
             }
         }
 
@@ -224,7 +241,7 @@ async function loadDetail() {
             setTimeout(() => { btn.textContent = 'Copy Link'; }, 2000);
         });
 
-        // Previous / Next (navigate by parent groups, or all images)
+        // Previous / Next
         const allData = await fetchMedia({ limit: 100 });
         const ids = allData.items ? allData.items.map(i => i.id) : allData.map(i => i.id);
         const currentIndex = ids.indexOf(imageId);
@@ -238,20 +255,28 @@ async function loadDetail() {
             window.location.href = `image.html?id=${ids[newIndex]}`;
         });
 
-        // Related images (same logic as before)
+        // Related media
         const related = (allData.items || allData).filter(i => i.id !== imageId && i.parent_id !== img.parent_id).slice(0, 4);
         const relatedGrid = document.getElementById('relatedGrid');
         relatedGrid.innerHTML = '';
         related.forEach(r => {
+            const isVideo = r.media_type === 'video';
             const card = document.createElement('article');
             card.className = 'gallery-card';
             card.innerHTML = `
                 <a href="image.html?id=${r.id}" class="card-link">
-                    <div class="card-img-wrap">
-                        <img src="${thumbnailUrl(r.cloudinary_url)}" alt="${r.title}" loading="lazy" class="card-img">
+                    <div class="card-img-wrap" style="position:relative;">
+                        <img src="${thumbnailUrl(r.cloudinary_url, r.media_type)}" alt="${r.title}" loading="lazy" class="card-img">
+                        ${isVideo ? `
+                        <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); 
+                                    background:rgba(0,0,0,0.7); color:#fff; width:48px; height:48px; 
+                                    border-radius:50%; display:flex; align-items:center; justify-content:center;
+                                    font-size:20px; pointer-events:none;">
+                            ▶
+                        </div>` : ''}
                     </div>
                     <div class="card-body">
-                        <h3 class="card-title">${r.title}</h3>
+                        <h3 class="card-title">${isVideo ? '🎬 ' : ''}${r.title}</h3>
                         <p class="card-sub">${r.country || ''} ${r.source ? '• ' + r.source : ''}</p>
                     </div>
                 </a>`;
@@ -259,8 +284,8 @@ async function loadDetail() {
         });
 
     } catch (err) {
-        console.error('Error loading image:', err);
-        document.body.innerHTML += '<p style="text-align:center">Could not load image details.</p>';
+        console.error('Error loading media:', err);
+        document.body.innerHTML += '<p style="text-align:center">Could not load media details.</p>';
     }
 }
 
