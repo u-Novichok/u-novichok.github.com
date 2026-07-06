@@ -3,75 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard — Novichok</title>
-    <style>
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body {
-            font-family: Arial, Helvetica, sans-serif;
-            background: #f4f4f4;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-        .dashboard {
-            background: #fff;
-            border: 1px solid #d9d9d9;
-            border-radius: 12px;
-            padding: 40px 30px;
-            width: 100%;
-            max-width: 500px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-            text-align: center;
-        }
-        .dashboard h2 {
-            font-size: 28px;
-            margin-bottom: 20px;
-        }
-        .dashboard p { margin: 10px 0; color: #555; }
-        .dashboard a {
-            display: inline-block;
-            margin: 10px;
-            padding: 12px 24px;
-            background: #000;
-            color: #fff;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: bold;
-        }
-        .dashboard a:hover { background: #222; }
-        .logout {
-            margin-top: 30px;
-            background: transparent;
-            border: 1px solid #999;
-            color: #333;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-    </style>
+    <title>Dashboard — Novichok Admin</title>
+    <link rel="stylesheet" href="css/admin.css">
 </head>
 <body>
-    <div class="dashboard">
-        <h2>Admin Panel</h2>
-        <p>Welcome! You’re logged in.</p>
-        <a href="upload.html">Upload New Image</a>
-        <a href="edit.html">Manage Images</a>
-        <p><em>(More tools coming soon)</em></p>
-        <button class="logout" onclick="logout()">Logout</button>
-    </div>
+
+    <header class="site-header">
+        <span class="site-title">Novichok</span>
+    </header>
+
+    <main class="admin-container">
+        <h2 style="margin-bottom:20px;">Dashboard</h2>
+
+        <div class="nav-links">
+            <a href="upload.html" class="btn btn-primary">Upload Media</a>
+            <a href="edit.html" class="btn btn-outline">Manage Media</a>
+        </div>
+
+        <div class="dashboard-grid" id="statsGrid">
+            <div class="stat-card"><h3>Total Images</h3><div class="stat-value">—</div></div>
+            <div class="stat-card"><h3>Storage Used</h3><div class="stat-value">—</div></div>
+        </div>
+
+        <button onclick="logout()" class="btn btn-outline" style="margin-top:10px;">Logout</button>
+    </main>
+
+    <footer class="admin-footer">
+        made by 
+        <a href="https://x.com/SkywardAdi" target="_blank" rel="noopener">x/skyward (@SkywardAdi)</a>
+        &amp;
+        <a href="https://x.com/adeep_ag" target="_blank" rel="noopener">x/adeep_ag (@adeep_ag)</a>
+    </footer>
 
     <script>
-        // Check if token exists; if not, redirect to login
         const token = localStorage.getItem('admin_token');
-        if (!token) {
-            window.location.href = 'login.html';
+        if (!token) window.location.href = 'login.html';
+
+        async function loadStats() {
+            try {
+                const res = await fetch('https://novichok-api.onrender.com/admin/stats', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    document.querySelectorAll('.stat-value')[0].textContent = data.totalImages || 0;
+                    document.querySelectorAll('.stat-value')[1].textContent = data.storageUsedFormatted || '0 MB';
+                }
+            } catch (e) {
+                console.error('Stats failed:', e);
+            }
         }
 
         function logout() {
             localStorage.removeItem('admin_token');
             window.location.href = 'login.html';
         }
+
+        loadStats();
     </script>
 </body>
 </html>
