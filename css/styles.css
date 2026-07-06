@@ -1,126 +1,112 @@
 /* =============================================
-   HOMEPAGE STYLES (your original – unchanged)
+   NOVICHOK – COMPLETE MOBILE‑FIRST STYLESHEET
    ============================================= */
 
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-body{
-    font-family:Arial, Helvetica, sans-serif;
-    background:#f4f4f4;
-    color:#222;
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f4f4f4;
+    color: #222;
+    line-height: 1.5;
 }
 
-/* Header */
-header{
-    background:#000;
-    height:70px;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    box-shadow:0 2px 8px rgba(0,0,0,.2);
-    position:sticky;
-    top:0;
-    z-index:1000;
+/* ---------- HEADER ---------- */
+header, .site-header {
+    background: #000;
+    height: 70px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,.2);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+header h2, .site-title {
+    color: #fff;
+    font-size: 32px;
+    font-weight: bold;
 }
 
-header h2{
-    color:#fff;
-    font-size:32px;
-    font-weight:bold;
+/* ---------- HOMEPAGE ---------- */
+.hero {
+    width: 95%;
+    max-width: 1200px;
+    height: 420px;
+    margin: 30px auto;
+    border: 1px solid #d9d9d9;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+}
+.hero img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
 }
 
-/* Hero / Banner */
-.hero{
-    width:95%;
-    max-width:1200px;
-    height:420px;
-    margin:30px auto;
-    border:1px solid #d9d9d9;
-    border-radius:12px;
-    overflow:hidden;
-    background:#fff;
+.library {
+    width: 95%;
+    max-width: 1200px;
+    margin: 50px auto;
+}
+.library h2 {
+    font-size: 30px;
+    font-weight: bold;
+    margin-bottom: 25px;
 }
 
-.hero img{
-    width:100%;
-    height:100%;
-    object-fit:cover;
-    display:block;
+.library-card {
+    width: 100%;
+    max-width: 520px;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: #000;
+    background: #fff;
+    border: 1px solid #d9d9d9;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    transition: .25s;
+}
+.library-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,.12);
+}
+.library-card img {
+    width: 180px;
+    height: 120px;
+    object-fit: cover;
+    border-right: 1px solid #d9d9d9;
+}
+.library-info {
+    padding: 20px;
+}
+.library-info h3 {
+    font-size: 24px;
+    font-weight: bold;
+}
+.library-subtitle {
+    display: block;
+    margin-top: 8px;
+    color: #666;
+    font-size: 16px;
 }
 
-/* Library Section */
-.library{
-    width:95%;
-    max-width:1200px;
-    margin:50px auto;
-}
-
-.library h2{
-    font-size:30px;
-    font-weight:bold;
-    margin-bottom:25px;
-}
-
-/* Library Cards */
-.library-card{
-    width:100%;
-    max-width:520px;
-    display:flex;
-    align-items:center;
-    text-decoration:none;
-    color:#000;
-    background:#fff;
-    border:1px solid #d9d9d9;
-    border-radius:12px;
-    overflow:hidden;
-    margin-bottom:20px;
-    transition:.25s;
-}
-
-.library-card:hover{
-    transform:translateY(-5px);
-    box-shadow:0 8px 20px rgba(0,0,0,.12);
-}
-
-.library-card img{
-    width:180px;
-    height:120px;
-    object-fit:cover;
-    border-right:1px solid #d9d9d9;
-}
-
-.library-info{
-    padding:20px;
-}
-
-.library-info h3{
-    font-size:24px;
-    font-weight:bold;
-}
-
-.library-subtitle{
-    display:block;
-    margin-top:8px;
-    color:#666;
-    font-size:16px;
-}
-
-/* =============================================
-   GALLERY & IMAGE DETAIL STYLES (from prototype)
-   ============================================= */
-
-/* Main container for gallery and image pages */
+/* ---------- GALLERY & DETAIL COMMONS ---------- */
 .main-container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 24px 20px 48px;
 }
 
-/* Back button */
 .back-btn {
     display: inline-flex;
     align-items: center;
@@ -134,40 +120,24 @@ header h2{
     border: 1px solid #d9d9d9;
     text-decoration: none;
     margin-bottom: 20px;
-    transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+    transition: 0.2s;
 }
-
 .back-btn:hover {
     background: #f0f0f0;
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    transform: translateX(-3px);
 }
 
-/* Page header (title area) */
-.page-header {
-    margin-bottom: 32px;
-}
+.page-header { margin-bottom: 32px; }
+.page-title { font-size: 2rem; font-weight: 700; color: #111; }
+.page-subtitle { font-size: 1rem; color: #777; margin-top: 4px; }
 
-.page-title {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #111;
-}
-
-.page-subtitle {
-    font-size: 1rem;
-    color: #777;
-    margin-top: 4px;
-}
-
-/* Gallery grid */
+/* Gallery Grid */
 .gallery-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 20px;
 }
 
-/* Gallery card */
 .gallery-card {
     background: #fff;
     border: 1px solid #d9d9d9;
@@ -177,51 +147,34 @@ header h2{
     transition: transform 0.3s, box-shadow 0.3s;
     cursor: pointer;
 }
-
 .gallery-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 10px 28px rgba(0,0,0,0.18);
 }
-
-.card-link {
-    display: block;
-    text-decoration: none;
-    color: inherit;
-}
-
-/* Image wrapper – 3:2 aspect ratio */
+.card-link { display: block; text-decoration: none; color: inherit; }
 .card-img-wrap {
     width: 100%;
     aspect-ratio: 3 / 2;
     overflow: hidden;
     background: #e8e8e8;
+    position: relative;
 }
-
 .card-img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     transition: transform 0.3s;
 }
-
-.gallery-card:hover .card-img {
-    transform: scale(1.04);
-}
-
-.card-body {
-    padding: 14px 16px 16px;
-}
-
+.gallery-card:hover .card-img { transform: scale(1.04); }
+.card-body { padding: 14px 16px 16px; }
 .card-title {
     font-size: 1rem;
     font-weight: 600;
     color: #111;
-    margin-bottom: 2px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
-
 .card-sub {
     font-size: 0.85rem;
     color: #555;
@@ -230,7 +183,7 @@ header h2{
     text-overflow: ellipsis;
 }
 
-/* Image detail page */
+/* Image Detail */
 .image-detail {
     background: #fff;
     border: 1px solid #d9d9d9;
@@ -239,7 +192,6 @@ header h2{
     box-shadow: 0 2px 10px rgba(0,0,0,0.08);
     margin-bottom: 40px;
 }
-
 .detail-img-wrap {
     width: 100%;
     border-radius: 10px;
@@ -247,7 +199,6 @@ header h2{
     background: #e8e8e8;
     margin-bottom: 20px;
 }
-
 .detail-img {
     width: 100%;
     height: auto;
@@ -256,38 +207,18 @@ header h2{
     max-height: 560px;
     background: #fafafa;
 }
+.detail-title { font-size: 1.6rem; font-weight: 700; color: #111; margin-bottom: 10px; }
+.detail-desc { font-size: 0.95rem; color: #444; line-height: 1.7; margin-bottom: 20px; }
 
-.detail-title {
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: #111;
-    margin-bottom: 10px;
-}
-
-.detail-desc {
-    font-size: 0.95rem;
-    color: #444;
-    line-height: 1.7;
-    margin-bottom: 20px;
-    max-width: 720px;
-}
-
-/* Metadata table */
+/* Metadata Table */
 .meta-table {
     width: 100%;
     border-collapse: collapse;
     margin-bottom: 24px;
     font-size: 0.9rem;
 }
-
-.meta-table tbody tr {
-    border-bottom: 1px solid #ececec;
-}
-
-.meta-table tbody tr:last-child {
-    border-bottom: none;
-}
-
+.meta-table tbody tr { border-bottom: 1px solid #ececec; }
+.meta-table tbody tr:last-child { border-bottom: none; }
 .meta-table th {
     text-align: left;
     font-weight: 600;
@@ -295,22 +226,16 @@ header h2{
     padding: 10px 16px 10px 0;
     width: 140px;
     white-space: nowrap;
-    vertical-align: top;
 }
+.meta-table td { padding: 10px 0; color: #555; }
 
-.meta-table td {
-    padding: 10px 0;
-    color: #555;
-}
-
-/* Action buttons */
+/* Action Buttons */
 .action-btns {
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
     margin-bottom: 24px;
 }
-
 .btn {
     display: inline-flex;
     align-items: center;
@@ -320,158 +245,104 @@ header h2{
     font-weight: 600;
     border-radius: 10px;
     border: 2px solid transparent;
-    transition: background 0.2s, color 0.2s, box-shadow 0.2s, transform 0.2s;
+    transition: 0.2s;
     cursor: pointer;
     user-select: none;
+    text-decoration: none;
 }
+.btn-dark { background: #000; color: #fff; border-color: #000; }
+.btn-dark:hover { background: #1a1a1a; }
+.btn-outline { background: #fff; color: #222; border-color: #bbb; }
+.btn-outline:hover { background: #f4f4f4; border-color: #888; }
 
-.btn:active {
-    transform: scale(0.97);
-}
-
-.btn-dark {
-    background: #000;
-    color: #fff;
-    border-color: #000;
-}
-
-.btn-dark:hover {
-    background: #1a1a1a;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.25);
-}
-
-.btn-outline {
-    background: #fff;
-    color: #222;
-    border-color: #bbb;
-}
-
-.btn-outline:hover {
-    background: #f4f4f4;
-    border-color: #888;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
-
-/* Previous / Next navigation */
 .prev-next-nav {
     display: flex;
     justify-content: space-between;
     gap: 12px;
     flex-wrap: wrap;
 }
+.prev-next-nav .btn { min-width: 130px; }
 
-.prev-next-nav .btn {
-    min-width: 130px;
-}
+.related-heading { font-size: 1.25rem; font-weight: 700; color: #111; margin-bottom: 18px; }
 
-/* Related images heading */
-.related-heading {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #111;
-    margin-bottom: 18px;
+/* ---------- FOOTER ---------- */
+.site-footer, footer {
+    border-top: 1px solid #d9d9d9;
+    padding: 16px 20px;
+    font-size: 0.85rem;
+    color: #666;
+    background: #fff;
+    text-align: left;
 }
+.site-footer a, footer a {
+    color: #333;
+    text-decoration: none;
+    font-weight: 500;
+}
+.site-footer a:hover, footer a:hover { text-decoration: underline; }
 
 /* =============================================
-   RESPONSIVE – TABLET (2 columns)
+   RESPONSIVE – TABLET (≤1024px)
    ============================================= */
-@media (max-width: 1024px) and (min-width: 601px) {
+@media (max-width: 1024px) {
     .gallery-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: 18px;
     }
-
-    .page-title {
-        font-size: 1.7rem;
-    }
-
-    .detail-title {
-        font-size: 1.4rem;
-    }
-
-    .detail-img {
-        max-height: 420px;
-    }
-
-    .meta-table th {
-        width: 110px;
-    }
+    .page-title { font-size: 1.7rem; }
+    .detail-title { font-size: 1.4rem; }
+    .detail-img { max-height: 420px; }
+    .meta-table th { width: 110px; }
 }
 
 /* =============================================
-   RESPONSIVE – MOBILE (1 column)
+   RESPONSIVE – MOBILE (≤600px)
    ============================================= */
 @media (max-width: 600px) {
+    header, .site-header {
+        height: 56px;
+    }
+    header h2, .site-title {
+        font-size: 24px;
+    }
+
     .main-container {
-        padding: 16px 14px 36px;
+        padding: 16px 12px 36px;
     }
-
-    header {
-        height: 60px;
-    }
-
-    header h2 {
-        font-size: 26px;
-    }
-
     .back-btn {
         font-size: 0.85rem;
         padding: 7px 12px;
-        margin-bottom: 14px;
     }
+    .page-header { margin-bottom: 20px; }
+    .page-title { font-size: 1.4rem; }
+    .page-subtitle { font-size: 0.85rem; }
 
-    .page-header {
-        margin-bottom: 20px;
-    }
-
-    .page-title {
-        font-size: 1.4rem;
-    }
-
-    .page-subtitle {
-        font-size: 0.85rem;
-    }
-
+    /* Gallery – single column */
     .gallery-grid {
         grid-template-columns: 1fr;
         gap: 16px;
     }
 
+    /* Detail */
     .image-detail {
         padding: 16px;
         border-radius: 10px;
     }
+    .detail-img { max-height: 300px; }
+    .detail-title { font-size: 1.2rem; }
+    .detail-desc { font-size: 0.88rem; }
 
-    .detail-img {
-        max-height: 300px;
-    }
-
-    .detail-title {
-        font-size: 1.2rem;
-    }
-
-    .detail-desc {
-        font-size: 0.88rem;
-    }
-
-    /* Stack metadata table rows */
+    /* Stack metadata table */
     .meta-table, .meta-table tbody, .meta-table tr, .meta-table th, .meta-table td {
         display: block;
         width: 100%;
     }
-
     .meta-table tr {
         margin-bottom: 10px;
         border-bottom: 1px solid #e0e0e0;
         padding-bottom: 8px;
     }
-
-    .meta-table tr:last-child {
-        border-bottom: none;
-        margin-bottom: 0;
-        padding-bottom: 0;
-    }
-
+    .meta-table tr:last-child { border-bottom: none; margin-bottom: 0; }
     .meta-table th {
         padding: 0 0 2px 0;
         font-size: 0.78rem;
@@ -480,7 +351,6 @@ header h2{
         letter-spacing: 0.03em;
         width: auto;
     }
-
     .meta-table td {
         padding: 0 0 4px 0;
         font-size: 0.9rem;
@@ -491,74 +361,48 @@ header h2{
         flex-direction: column;
         gap: 10px;
     }
-
-    .action-btns .btn {
-        width: 100%;
-    }
-
+    .action-btns .btn { width: 100%; }
     .prev-next-nav {
         flex-direction: column;
         gap: 10px;
     }
+    .prev-next-nav .btn { width: 100%; min-width: auto; }
 
-    .prev-next-nav .btn {
-        width: 100%;
-        min-width: auto;
-    }
-
-    .related-heading {
-        font-size: 1.1rem;
-    }
-
-    /* Existing mobile styles for home page (keep) */
+    /* Homepage */
     .hero {
         height: 220px;
         margin: 20px auto;
     }
-
-    .library {
-        margin-top: 30px;
-    }
-
-    .library h2 {
-        font-size: 26px;
-    }
-
+    .library { margin-top: 30px; }
+    .library h2 { font-size: 26px; }
     .library-card {
         flex-direction: column;
         align-items: flex-start;
         max-width: 100%;
     }
-
     .library-card img {
         width: 100%;
         height: 200px;
         border-right: none;
         border-bottom: 1px solid #d9d9d9;
     }
+    .library-info { width: 100%; padding: 18px; }
+    .library-info h3 { font-size: 22px; }
+    .library-subtitle { font-size: 15px; }
 
-    .library-info {
-        width: 100%;
-        padding: 18px;
+    /* Thumbnail strip scrollable */
+    #thumbStrip {
+        display: flex;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
     }
-
-    .library-info h3 {
-        font-size: 22px;
-    }
-
-    .library-subtitle {
-        font-size: 15px;
+    #thumbStrip > div {
+        flex-shrink: 0;
     }
 }
 
-/* Large screens */
+/* ---------- Large screens ---------- */
 @media (min-width: 1600px) {
-    .hero {
-        max-width: 1400px;
-        height: 480px;
-    }
-
-    .library {
-        max-width: 1400px;
-    }
+    .hero { max-width: 1400px; height: 480px; }
+    .library { max-width: 1400px; }
 }
