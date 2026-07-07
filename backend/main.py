@@ -33,7 +33,7 @@ try:
     app.include_router(stats.public_router)   # public tracking
     app.include_router(stats.admin_router)    # admin stats
 
-    @app.get("/" ,methods=["GET", "HEAD"])
+    @app.api_route("/" ,methods=["GET", "HEAD"])
     def root():
         return {"status": "ok", "service": "Novichok API"}
 
