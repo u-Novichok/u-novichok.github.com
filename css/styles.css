@@ -282,6 +282,156 @@ header h2, .site-title {
 .site-footer a:hover, footer a:hover { text-decoration: underline; }
 
 /* =============================================
+   TOOLS PAGE
+   ============================================= */
+
+.tool-card {
+    max-width: 600px;
+    background: #fff;
+    border: 1px solid #d9d9d9;
+    border-radius: 12px;
+    padding: 28px;
+    margin: 0 0 32px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
+
+.tool-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.tool-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 12px;
+    object-fit: cover;
+    border: 1px solid #e0e0e0;
+    flex-shrink: 0;
+}
+
+.tool-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #111;
+    margin-bottom: 4px;
+}
+
+.tool-header .page-subtitle {
+    margin-top: 0;
+}
+
+/* Pill badges row */
+.tool-meta {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.tool-meta li {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: #444;
+    background: #f0f0f0;
+    border: 1px solid #e0e0e0;
+    border-radius: 20px;
+    padding: 5px 12px;
+}
+
+.tool-meta li i {
+    font-size: 0.78rem;
+    color: #666;
+}
+
+/* Download button – reuses .back-btn shape but darker */
+.download-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #fff;
+    background: #000;
+    border: 1px solid #000;
+    border-radius: 8px;
+    padding: 10px 20px;
+    text-decoration: none;
+    transition: 0.2s;
+    width: fit-content;
+}
+.download-btn:hover {
+    background: #222;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+}
+
+/* Install steps */
+.install-steps {
+    background: #f9f9f9;
+    border: 1px solid #e8e8e8;
+    border-radius: 10px;
+    padding: 20px 24px;
+}
+
+.install-steps h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #111;
+    margin-bottom: 14px;
+}
+
+.install-steps ol {
+    padding-left: 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.install-steps li {
+    font-size: 0.92rem;
+    color: #333;
+    line-height: 1.55;
+}
+
+.install-steps code {
+    background: #ebebeb;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 0.88em;
+    font-family: monospace;
+    color: #c0392b;
+}
+
+.install-steps strong {
+    color: #111;
+}
+
+/* Source link row */
+.tool-source {
+    font-size: 0.85rem;
+    color: #777;
+}
+
+.tool-source a {
+    color: #333;
+    font-weight: 500;
+    text-decoration: underline;
+}
+
+.tool-source a:hover {
+    color: #000;
+}
+
+/* =============================================
    RESPONSIVE – TABLET (≤1024px)
    ============================================= */
 @media (max-width: 1024px) {
@@ -399,6 +549,26 @@ header h2, .site-title {
     #thumbStrip > div {
         flex-shrink: 0;
     }
+
+    /* Tools page – mobile */
+    .tool-card {
+        padding: 20px 16px;
+        gap: 16px;
+    }
+    .tool-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    .tool-icon {
+        width: 52px;
+        height: 52px;
+    }
+    .tool-header h2 { font-size: 1.3rem; }
+    .tool-meta { gap: 8px; }
+    .download-btn { width: 100%; justify-content: center; }
+    .install-steps { padding: 16px; }
+    .install-steps ol { gap: 10px; }
 }
 
 /* ---------- Large screens ---------- */
