@@ -22,35 +22,73 @@
   </section>
 
   <div class="tool-card">
+
+    <!-- Header -->
     <div class="tool-header">
-      <img src="https://raw.githubusercontent.com/u-Novichok/Kali/main/extension/icons/icon128.png" alt="Kali Extension">
+      <img src="assets/images/kali-cover.jpg" alt="Kali" class="tool-icon">
       <div>
         <h2>Kali</h2>
-        <p class="page-subtitle">Auto-hides posts from a blocklist on X / Twitter</p>
+        <p class="page-subtitle">Clean your X feed, Indian defence style</p>
       </div>
     </div>
 
+    <!-- Badges -->
     <ul class="tool-meta">
-      <li><i class="fa-brands fa-chrome"></i> Chrome (v88+)</li>
-      <li><i class="fa-solid fa-lock"></i> Only runs on x.com and twitter.com</li>
+      <li><i class="fa-brands fa-chrome"></i> Chrome v88+</li>
+      <li><i class="fa-brands fa-edge"></i> Edge</li>
+      <li><i class="fa-solid fa-shield-halved"></i> Brave</li>
+      <li><i class="fa-solid fa-lock"></i> Only runs on x.com & twitter.com</li>
       <li><i class="fa-solid fa-code-branch"></i> Open source</li>
     </ul>
 
-    <a href="https://github.com/u-Novichok/Kali/archive/refs/heads/main.zip"
-       class="back-btn" download>
-      <i class="fa-solid fa-download"></i> Download Extension
-    </a>
+    <!-- Description -->
+    <p style="font-size:0.95rem; color:#444; line-height:1.65;">
+      Kali automatically hides unwanted posts on X (Twitter) using a 
+      community-managed blocklist — built for the Indian defence and 
+      OSINT community. Lightweight, no data collection, runs silently 
+      in the background.
+    </p>
 
+    <!-- Download + counter -->
+    <div class="download-wrap">
+      <a href="https://github.com/u-Novichok/Kali/releases/download/v0.1.0/kali-extension-v0.1.0.zip"
+         class="download-btn">
+        <i class="fa-solid fa-download"></i> Download v0.1.0
+      </a>
+      <img
+        src="https://img.shields.io/github/downloads/u-Novichok/Kali/total?style=flat&label=Downloads&color=000&labelColor=333"
+        alt="Total downloads"
+        class="download-badge">
+    </div>
+
+    <!-- Install steps -->
     <section class="install-steps">
       <h3>How to install</h3>
       <ol>
-        <li>Unzip the downloaded file.</li>
+        <li>Download and unzip <code>kali-extension-v0.1.0.zip</code></li>
         <li>Open Chrome and go to <code>chrome://extensions</code></li>
-        <li>Enable <strong>Developer mode</strong> using the toggle in the top-right.</li>
-        <li>Click <strong>Load unpacked</strong> and select the <code>Kali-main/extension</code> folder.</li>
-        <li>Done — the Kali icon will appear in your toolbar.</li>
+        <li>Enable <strong>Developer mode</strong> using the toggle in the top-right corner</li>
+        <li>Click <strong>Load unpacked</strong> and select the <code>extension</code> folder from the unzipped files</li>
+        <li>Done — the Kali icon will appear in your toolbar</li>
       </ol>
+      <p style="margin-top:14px; font-size:0.85rem; color:#888;">
+        Also works on <strong>Edge</strong> and <strong>Brave</strong> — same steps apply.
+      </p>
     </section>
+
+    <!-- Source link -->
+    <p class="tool-source">
+      <i class="fa-brands fa-github"></i>
+      Source code:
+      <a href="https://github.com/u-Novichok/Kali" target="_blank" rel="noopener">
+        github.com/u-Novichok/Kali
+      </a>
+      &nbsp;·&nbsp;
+      <a href="https://github.com/u-Novichok/Kali/releases/tag/v0.1.0" target="_blank" rel="noopener">
+        Release notes
+      </a>
+    </p>
+
   </div>
 </main>
 
