@@ -4,25 +4,24 @@ from database import get_db
 
 router = APIRouter()
 
+
 @router.get("/share/{id}", response_class=HTMLResponse)
 def share_page(id: int):
     db = get_db()
-    rows = db.execute("SELECT * FROM media WHERE id = ?", (id,)).fetchall()
-    if not rows:
+    row = db.execute("SELECT * FROM media WHERE id = ?", (id,)).fetchone()
+    if not row:
         raise HTTPException(404, "Media not found")
-    row = rows[0]
 
-    full_title = row[1] if row[1] else "Novichok Media"
+    full_title = row.get("title") or "Novichok Media"
     short_title = (full_title[:57] + "...") if len(full_title) > 60 else full_title
 
-    description = row[2] if row[2] else ""
+    description = row.get("description") or ""
     if not description.strip():
         description = "View this OSINT / defence image on Novichok."
-
     og_description = (description[:197] + "...") if len(description) > 200 else description
 
-    media_type = row[5] if len(row) > 5 else "image"
-    original_url = row[7] if len(row) > 7 else ""
+    media_type = row.get("media_type", "image")
+    original_url = row.get("cloudinary_url", "")
     page_url = f"https://u-novichok.github.io/image.html?id={id}"
 
     if media_type == "video":
