@@ -16,13 +16,13 @@ def login(req: LoginRequest):
         if not admin:
             print("LOGIN DEBUG: No admin found with that email")
             raise HTTPException(401, "Invalid credentials")
-        stored_hash = admin[2]
+        stored_hash = admin.get("password_hash")
         print(f"LOGIN DEBUG: Stored hash = {stored_hash}")
         password_ok = verify_password(req.password, stored_hash)
         print(f"LOGIN DEBUG: Password match = {password_ok}")
         if not password_ok:
             raise HTTPException(401, "Invalid credentials")
-        token = create_access_token(data={"sub": admin[1], "role": admin[3]})
+        token = create_access_token(data={"sub": admin.get("email"), "role": admin.get("role", "admin")})
         return TokenResponse(access_token=token)
     except Exception as e:
         print("LOGIN ERROR:")
