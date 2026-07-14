@@ -82,6 +82,22 @@
         .info-box { background:#f9f9f9; border:1px solid #e0e0e0; border-radius:8px; padding:15px; margin-bottom:20px; font-size:14px; color:#555; }
         .info-box strong { color:#000; }
 
+        /* ── Edit Modal ── */
+        .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:2000; align-items:center; justify-content:center; }
+        .modal-overlay.open { display:flex; }
+        .modal-box { background:#fff; border-radius:14px; padding:30px; width:90%; max-width:620px; max-height:90vh; overflow-y:auto; box-shadow:0 8px 40px rgba(0,0,0,0.25); }
+        .modal-box h3 { font-size:20px; font-weight:700; margin-bottom:20px; }
+        .modal-form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+        .modal-form-group { margin-bottom:14px; }
+        .modal-form-group.full { grid-column:1/-1; }
+        .modal-form-group label { display:block; font-size:13px; font-weight:600; color:#444; margin-bottom:4px; }
+        .modal-form-group input, .modal-form-group textarea { width:100%; padding:9px 12px; border:1px solid #d9d9d9; border-radius:7px; font-size:14px; }
+        .modal-form-group input:focus, .modal-form-group textarea:focus { outline:none; border-color:#000; }
+        .modal-actions { display:flex; gap:12px; margin-top:20px; align-items:center; }
+        .modal-save-status { font-size:13px; font-weight:600; }
+        .modal-save-ok { color:#2e7d32; }
+        .modal-save-err { color:#c62828; }
+
         @media (max-width:900px) {
             .sidebar { transform:translateX(-240px); }
             .sidebar.open { transform:translateX(0); }
@@ -234,6 +250,52 @@
             </div>
         </div>
     </main>
+
+    <!-- Edit Media Modal -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal-box">
+            <h3>Edit Media <span id="editModalId" style="color:#888;font-size:14px;font-weight:400;"></span></h3>
+            <div class="modal-form-row">
+                <div class="modal-form-group full">
+                    <label>Title *</label>
+                    <input type="text" id="edit-title">
+                </div>
+                <div class="modal-form-group full">
+                    <label>Description</label>
+                    <textarea id="edit-description" rows="2"></textarea>
+                </div>
+                <div class="modal-form-group">
+                    <label>Category</label>
+                    <input type="text" id="edit-category">
+                </div>
+                <div class="modal-form-group">
+                    <label>Country</label>
+                    <input type="text" id="edit-country">
+                </div>
+                <div class="modal-form-group">
+                    <label>Source</label>
+                    <input type="text" id="edit-source">
+                </div>
+                <div class="modal-form-group">
+                    <label>Resolution</label>
+                    <input type="text" id="edit-resolution">
+                </div>
+                <div class="modal-form-group">
+                    <label>Capture Date</label>
+                    <input type="date" id="edit-capture_date">
+                </div>
+                <div class="modal-form-group">
+                    <label>Tags (comma separated)</label>
+                    <input type="text" id="edit-tags">
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-primary" onclick="submitEditModal()">Save Changes</button>
+                <button class="btn btn-outline" onclick="closeEditModal()">Cancel</button>
+                <span class="modal-save-status" id="editModalStatus"></span>
+            </div>
+        </div>
+    </div>
 
     <footer style="border-top:1px solid #d9d9d9; padding:16px 20px; text-align:left; font-size:0.85rem; color:#666; background:#fff;">
         made by 
@@ -539,7 +601,89 @@
             }
         }
 
-        window.editMedia = id => alert('Edit functionality coming soon for ID ' + id);
+        let currentEditId = null;
+
+        window.editMedia = async function(id) {
+            currentEditId = id;
+            const statusEl = document.getElementById('editModalStatus');
+            statusEl.textContent = '';
+
+            // Fetch current data for this item
+            try {
+                const res = await fetch(`${API_BASE}/media/${id}`);
+                if (!res.ok) throw new Error('Not found');
+                const item = await res.json();
+
+                document.getElementById('editModalId').textContent = `(ID: ${id})`;
+                document.getElementById('edit-title').value        = item.title || '';
+                document.getElementById('edit-description').value  = item.description || '';
+                document.getElementById('edit-category').value     = item.category || '';
+                document.getElementById('edit-country').value      = item.country || '';
+                document.getElementById('edit-source').value       = item.source || '';
+                document.getElementById('edit-resolution').value   = item.resolution || '';
+                document.getElementById('edit-capture_date').value = item.capture_date || '';
+                document.getElementById('edit-tags').value         = item.tags || '';
+
+                document.getElementById('editModal').classList.add('open');
+            } catch (err) {
+                alert('Could not load media details. Please try again.');
+            }
+        };
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('open');
+            document.getElementById('editModalStatus').textContent = '';
+            currentEditId = null;
+        }
+
+        // Close modal when clicking the dark overlay
+        document.getElementById('editModal').addEventListener('click', function(e) {
+            if (e.target === this) closeEditModal();
+        });
+
+        async function submitEditModal() {
+            if (!currentEditId) return;
+            const statusEl = document.getElementById('editModalStatus');
+            statusEl.textContent = 'Saving…';
+            statusEl.className = 'modal-save-status';
+
+            const payload = {
+                title:        document.getElementById('edit-title').value.trim(),
+                description:  document.getElementById('edit-description').value.trim(),
+                category:     document.getElementById('edit-category').value.trim(),
+                country:      document.getElementById('edit-country').value.trim(),
+                source:       document.getElementById('edit-source').value.trim(),
+                resolution:   document.getElementById('edit-resolution').value.trim(),
+                capture_date: document.getElementById('edit-capture_date').value.trim(),
+                tags:         document.getElementById('edit-tags').value.trim(),
+            };
+
+            try {
+                const res = await fetch(`${API_BASE}/admin/media/${currentEditId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    statusEl.textContent = '✓ Saved!';
+                    statusEl.className = 'modal-save-status modal-save-ok';
+                    setTimeout(() => {
+                        closeEditModal();
+                        loadManageTab();
+                    }, 1000);
+                } else {
+                    const err = await res.json();
+                    statusEl.textContent = '✗ ' + (err.detail || 'Save failed');
+                    statusEl.className = 'modal-save-status modal-save-err';
+                }
+            } catch (err) {
+                statusEl.textContent = '✗ Network error';
+                statusEl.className = 'modal-save-status modal-save-err';
+            }
+        }
         window.deleteMedia = async id => {
             if (!confirm('Delete this media permanently?')) return;
             const manageMsg = document.getElementById('manageMessage');
