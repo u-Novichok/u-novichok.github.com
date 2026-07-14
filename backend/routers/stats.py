@@ -47,26 +47,35 @@ def get_admin_stats(admin = Depends(get_current_admin)):
     month_start = datetime.utcnow().strftime("%Y-%m-01")
     year_start = datetime.utcnow().strftime("%Y-01-01")
 
-    visitors_today = db.execute(
-        "SELECT COUNT(*) FROM page_views WHERE date(viewed_at) = ?", (today,)
-    ).fetchone()[0]
-    visitors_month = db.execute(
-        "SELECT COUNT(*) FROM page_views WHERE date(viewed_at) >= ?", (month_start,)
-    ).fetchone()[0]
-    visitors_year = db.execute(
-        "SELECT COUNT(*) FROM page_views WHERE date(viewed_at) >= ?", (year_start,)
-    ).fetchone()[0]
+    visitors_today = (db.execute(
+        "SELECT COUNT(*) AS cnt FROM page_views WHERE date(viewed_at) = ?", (today,)
+    ).fetchone() or {}).get("cnt", 0)
 
-    total_shares = db.execute("SELECT COUNT(*) FROM shares").fetchone()[0]
+    visitors_month = (db.execute(
+        "SELECT COUNT(*) AS cnt FROM page_views WHERE date(viewed_at) >= ?", (month_start,)
+    ).fetchone() or {}).get("cnt", 0)
 
-    total_images = db.execute("SELECT COUNT(*) FROM media WHERE media_type='image'").fetchone()[0]
-    total_videos = db.execute("SELECT COUNT(*) FROM media WHERE media_type='video'").fetchone()[0]
+    visitors_year = (db.execute(
+        "SELECT COUNT(*) AS cnt FROM page_views WHERE date(viewed_at) >= ?", (year_start,)
+    ).fetchone() or {}).get("cnt", 0)
+
+    total_shares = (db.execute(
+        "SELECT COUNT(*) AS cnt FROM shares"
+    ).fetchone() or {}).get("cnt", 0)
+
+    total_images = (db.execute(
+        "SELECT COUNT(*) AS cnt FROM media WHERE media_type='image'"
+    ).fetchone() or {}).get("cnt", 0)
+
+    total_videos = (db.execute(
+        "SELECT COUNT(*) AS cnt FROM media WHERE media_type='video'"
+    ).fetchone() or {}).get("cnt", 0)
+
     total_media = total_images + total_videos
 
-    size_row = db.execute("SELECT SUM(file_size) FROM media").fetchone()
-    storage_used_bytes = size_row[0] if size_row and size_row[0] else 0
+    size_row = db.execute("SELECT SUM(file_size) AS total FROM media").fetchone()
+    storage_used_bytes = (size_row or {}).get("total") or 0
 
-    # Top media by views
     top_media_rows = db.execute("""
         SELECT m.id, m.title, m.cloudinary_url, m.media_type, COUNT(v.id) as view_count
         FROM media m
@@ -76,10 +85,13 @@ def get_admin_stats(admin = Depends(get_current_admin)):
         LIMIT 5
     """).fetchall()
     top_media = [{
-        "id": r[0], "title": r[1], "url": r[2], "media_type": r[3], "views": r[4]
+        "id": r.get("id"),
+        "title": r.get("title"),
+        "url": r.get("cloudinary_url"),
+        "media_type": r.get("media_type"),
+        "views": r.get("view_count", 0)
     } for r in top_media_rows]
 
-    # Top shared
     top_shared_rows = db.execute("""
         SELECT m.id, m.title, m.cloudinary_url, m.media_type, COUNT(s.id) as share_count
         FROM media m
@@ -89,7 +101,11 @@ def get_admin_stats(admin = Depends(get_current_admin)):
         LIMIT 5
     """).fetchall()
     top_shared = [{
-        "id": r[0], "title": r[1], "url": r[2], "media_type": r[3], "shares": r[4]
+        "id": r.get("id"),
+        "title": r.get("title"),
+        "url": r.get("cloudinary_url"),
+        "media_type": r.get("media_type"),
+        "shares": r.get("share_count", 0)
     } for r in top_shared_rows]
 
     return {
@@ -100,7 +116,7 @@ def get_admin_stats(admin = Depends(get_current_admin)):
         "total_images": total_images,
         "total_videos": total_videos,
         "total_media": total_media,
-        "storage_used_mb": round(storage_used_bytes / (1024*1024), 2),
+        "storage_used_mb": round(storage_used_bytes / (1024 * 1024), 2),
         "top_media": top_media,
         "top_shared": top_shared,
         "render_status": "online",
