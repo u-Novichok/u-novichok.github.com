@@ -5,93 +5,262 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Media — Novichok Admin</title>
     <link rel="stylesheet" href="css/admin.css">
+    <style>
+        .image-row { flex-wrap: wrap; gap: 12px; }
+        .edit-panel {
+            display: none;
+            width: 100%;
+            background: #f9f9f9;
+            border-top: 1px solid #e0e0e0;
+            padding: 16px;
+            margin-top: 8px;
+            border-radius: 0 0 8px 8px;
+        }
+        .edit-panel.open { display: block; }
+        .edit-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .edit-grid .full { grid-column: 1 / -1; }
+        .edit-grid label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 4px;
+        }
+        .edit-grid input,
+        .edit-grid textarea {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .edit-grid input:focus,
+        .edit-grid textarea:focus {
+            outline: none;
+            border-color: #000;
+        }
+        .edit-actions { display: flex; gap: 10px; }
+        .btn-save { background: #000; color: #fff; border: none; padding: 9px 20px; border-radius: 7px; font-weight: 600; cursor: pointer; font-size: 14px; }
+        .btn-save:hover { background: #222; }
+        .btn-cancel-edit { background: #fff; color: #222; border: 1px solid #bbb; padding: 9px 20px; border-radius: 7px; font-weight: 600; cursor: pointer; font-size: 14px; }
+        .btn-edit { background: #fff; color: #222; border: 1px solid #bbb; padding: 7px 14px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+        .btn-edit:hover { background: #f0f0f0; }
+        .save-status { font-size: 13px; font-weight: 600; margin-left: 10px; }
+        .save-ok { color: #2e7d32; }
+        .save-err { color: #c62828; }
+        .image-info h4 { font-size: 15px; margin-bottom: 2px; }
+        .image-info span { font-size: 12px; color: #888; }
+        @media (max-width: 600px) {
+            .edit-grid { grid-template-columns: 1fr; }
+        }
+    </style>
 </head>
 <body>
 
-    <header class="site-header">
-        <span class="site-title">Novichok</span>
-    </header>
+<header class="site-header">
+    <span class="site-title">Novichok</span>
+</header>
 
-    <main class="admin-container">
-        <div class="admin-card">
-            <h2>Manage Media</h2>
-            <div id="msg" class="message"></div>
-            <div id="imageList" class="image-list">Loading...</div>
-        </div>
-        <p style="text-align:center;"><a href="dashboard.html">← Back to Dashboard</a></p>
-    </main>
+<main class="admin-container">
+    <div class="admin-card">
+        <h2>Manage Media</h2>
+        <div id="msg" class="message"></div>
+        <div id="imageList" class="image-list">Loading...</div>
+    </div>
+    <p style="text-align:center;"><a href="dashboard.html">← Back to Dashboard</a></p>
+</main>
 
-    <footer class="admin-footer">
-        made by 
-        <a href="https://x.com/SkywardAdi" target="_blank" rel="noopener">x/skyward (@SkywardAdi)</a>
-        &amp;
-        <a href="https://x.com/adeep_ag" target="_blank" rel="noopener">x/adeep_ag (@adeep_ag)</a>
-    </footer>
+<footer class="admin-footer">
+    made by 
+    <a href="https://x.com/SkywardAdi" target="_blank" rel="noopener">x/skyward (@SkywardAdi)</a>
+    &amp;
+    <a href="https://x.com/adeep_ag" target="_blank" rel="noopener">x/adeep_ag (@adeep_ag)</a>
+</footer>
 
-    <script>
-        const token = localStorage.getItem('admin_token');
-        if (!token) window.location.href = 'login.html';
+<script>
+    const API = 'https://novichok-api.onrender.com';
+    const token = localStorage.getItem('admin_token');
+    if (!token) window.location.href = 'login.html';
 
-        async function loadImages() {
-            const listDiv = document.getElementById('imageList');
-            try {
-                const res = await fetch('https://novichok-api.onrender.com/media?limit=50');
-                const data = await res.json();
-                const items = data.items || data;
-                if (!items || items.length === 0) {
-                    listDiv.innerHTML = '<p>No media yet.</p>';
-                    return;
-                }
-                listDiv.innerHTML = '';
-                items.forEach(img => {
-                    const row = document.createElement('div');
-                    row.className = 'image-row';
-                    const thumb = img.media_type === 'video' 
-                        ? `<video src="${img.cloudinary_url}" style="width:60px;height:45px;object-fit:cover;border-radius:4px;margin-right:15px;" muted></video>`
-                        : `<img src="${img.cloudinary_url}" alt="${img.title}" style="width:60px;height:45px;object-fit:cover;border-radius:4px;margin-right:15px;">`;
-                    row.innerHTML = `
-                        ${thumb}
-                        <div class="image-info">
-                            <h4>${img.title} ${img.media_type === 'video' ? '🎬' : ''}</h4>
-                            <span>ID: ${img.id} | ${img.country || ''} • ${img.source || ''}</span>
-                        </div>
-                        <div class="image-actions">
-                            <button class="btn btn-danger" data-id="${img.id}">Delete</button>
-                        </div>
-                    `;
-                    listDiv.appendChild(row);
-                });
-
-                document.querySelectorAll('.btn-danger').forEach(btn => {
-                    btn.addEventListener('click', async (e) => {
-                        const id = e.target.getAttribute('data-id');
-                        if (!confirm('Delete this permanently?')) return;
-                        try {
-                            const delRes = await fetch(`https://novichok-api.onrender.com/admin/media/${id}`, {
-                                method: 'DELETE',
-                                headers: { 'Authorization': 'Bearer ' + token }
-                            });
-                            if (delRes.ok) {
-                                document.getElementById('msg').textContent = 'Deleted successfully.';
-                                document.getElementById('msg').className = 'message message-success';
-                                loadImages();
-                            } else {
-                                const err = await delRes.json();
-                                document.getElementById('msg').textContent = 'Error: ' + err.detail;
-                                document.getElementById('msg').className = 'message message-error';
-                            }
-                        } catch (err) {
-                            document.getElementById('msg').textContent = 'Network error.';
-                            document.getElementById('msg').className = 'message message-error';
-                        }
-                    });
-                });
-            } catch (err) {
-                listDiv.innerHTML = '<p>Failed to load media.</p>';
+    async function loadImages() {
+        const listDiv = document.getElementById('imageList');
+        try {
+            const res = await fetch(`${API}/media?limit=100`);
+            const data = await res.json();
+            const items = data.items || data;
+            if (!items || items.length === 0) {
+                listDiv.innerHTML = '<p>No media yet.</p>';
+                return;
             }
+            listDiv.innerHTML = '';
+            items.forEach(img => renderRow(img, listDiv));
+        } catch (err) {
+            listDiv.innerHTML = '<p>Failed to load media.</p>';
         }
+    }
 
-        loadImages();
-    </script>
+    function renderRow(img, container) {
+        const row = document.createElement('div');
+        row.className = 'image-row';
+        row.id = `row-${img.id}`;
+
+        const thumb = img.media_type === 'video'
+            ? `<video src="${img.cloudinary_url}" style="width:60px;height:45px;object-fit:cover;border-radius:4px;margin-right:15px;flex-shrink:0;" muted></video>`
+            : `<img src="${img.cloudinary_url}" alt="${img.title}" style="width:60px;height:45px;object-fit:cover;border-radius:4px;margin-right:15px;flex-shrink:0;">`;
+
+        const metaLine = [
+            img.country, img.source, img.capture_date, img.resolution
+        ].filter(Boolean).join(' • ') || '<span style="color:#bbb">No metadata</span>';
+
+        row.innerHTML = `
+            <div style="display:flex;align-items:center;flex:1;min-width:0;">
+                ${thumb}
+                <div class="image-info" style="min-width:0;">
+                    <h4 style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${img.title} ${img.media_type === 'video' ? '🎬' : ''}</h4>
+                    <span>ID: ${img.id} | ${metaLine}</span>
+                </div>
+            </div>
+            <div class="image-actions">
+                <button class="btn-edit" onclick="toggleEdit(${img.id})">Edit</button>
+                <button class="btn btn-danger" onclick="deleteMedia(${img.id})">Delete</button>
+            </div>
+
+            <div class="edit-panel" id="edit-${img.id}">
+                <div class="edit-grid">
+                    <div class="full">
+                        <label>Title *</label>
+                        <input id="e-title-${img.id}" value="${escapeAttr(img.title)}">
+                    </div>
+                    <div class="full">
+                        <label>Description</label>
+                        <textarea id="e-desc-${img.id}" rows="2">${escapeHtml(img.description || '')}</textarea>
+                    </div>
+                    <div>
+                        <label>Category</label>
+                        <input id="e-cat-${img.id}" value="${escapeAttr(img.category || '')}">
+                    </div>
+                    <div>
+                        <label>Country</label>
+                        <input id="e-country-${img.id}" value="${escapeAttr(img.country || '')}">
+                    </div>
+                    <div>
+                        <label>Source</label>
+                        <input id="e-source-${img.id}" value="${escapeAttr(img.source || '')}">
+                    </div>
+                    <div>
+                        <label>Resolution</label>
+                        <input id="e-resolution-${img.id}" value="${escapeAttr(img.resolution || '')}">
+                    </div>
+                    <div>
+                        <label>Capture Date</label>
+                        <input type="date" id="e-date-${img.id}" value="${escapeAttr(img.capture_date || '')}">
+                    </div>
+                    <div>
+                        <label>Tags (comma separated)</label>
+                        <input id="e-tags-${img.id}" value="${escapeAttr(img.tags || '')}">
+                    </div>
+                </div>
+                <div class="edit-actions">
+                    <button class="btn-save" onclick="saveEdit(${img.id})">Save</button>
+                    <button class="btn-cancel-edit" onclick="toggleEdit(${img.id})">Cancel</button>
+                    <span class="save-status" id="save-status-${img.id}"></span>
+                </div>
+            </div>
+        `;
+        container.appendChild(row);
+    }
+
+    function toggleEdit(id) {
+        const panel = document.getElementById(`edit-${id}`);
+        panel.classList.toggle('open');
+    }
+
+    async function saveEdit(id) {
+        const statusEl = document.getElementById(`save-status-${id}`);
+        statusEl.textContent = 'Saving…';
+        statusEl.className = 'save-status';
+
+        const payload = {
+            title:       document.getElementById(`e-title-${id}`).value.trim(),
+            description: document.getElementById(`e-desc-${id}`).value.trim(),
+            category:    document.getElementById(`e-cat-${id}`).value.trim(),
+            country:     document.getElementById(`e-country-${id}`).value.trim(),
+            source:      document.getElementById(`e-source-${id}`).value.trim(),
+            resolution:  document.getElementById(`e-resolution-${id}`).value.trim(),
+            capture_date: document.getElementById(`e-date-${id}`).value.trim(),
+            tags:        document.getElementById(`e-tags-${id}`).value.trim(),
+        };
+
+        try {
+            const res = await fetch(`${API}/admin/media/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                statusEl.textContent = '✓ Saved';
+                statusEl.className = 'save-status save-ok';
+                // Update the meta line in the row header
+                const metaLine = [payload.country, payload.source, payload.capture_date, payload.resolution]
+                    .filter(Boolean).join(' • ') || '<span style="color:#bbb">No metadata</span>';
+                const infoSpan = document.querySelector(`#row-${id} .image-info span`);
+                if (infoSpan) infoSpan.innerHTML = `ID: ${id} | ${metaLine}`;
+                const titleEl = document.querySelector(`#row-${id} .image-info h4`);
+                if (titleEl) titleEl.textContent = payload.title;
+                setTimeout(() => {
+                    statusEl.textContent = '';
+                    document.getElementById(`edit-${id}`).classList.remove('open');
+                }, 1500);
+            } else {
+                const err = await res.json();
+                statusEl.textContent = '✗ ' + (err.detail || 'Error');
+                statusEl.className = 'save-status save-err';
+            }
+        } catch (err) {
+            statusEl.textContent = '✗ Network error';
+            statusEl.className = 'save-status save-err';
+        }
+    }
+
+    async function deleteMedia(id) {
+        if (!confirm('Delete this permanently? This cannot be undone.')) return;
+        const msgDiv = document.getElementById('msg');
+        try {
+            const res = await fetch(`${API}/admin/media/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (res.ok) {
+                msgDiv.textContent = `Deleted ID ${id}.`;
+                msgDiv.className = 'message message-success';
+                document.getElementById(`row-${id}`)?.remove();
+            } else {
+                const err = await res.json();
+                msgDiv.textContent = 'Error: ' + (err.detail || 'Unknown');
+                msgDiv.className = 'message message-error';
+            }
+        } catch (err) {
+            msgDiv.textContent = 'Network error.';
+            msgDiv.className = 'message message-error';
+        }
+    }
+
+    function escapeAttr(str) {
+        return String(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+    function escapeHtml(str) {
+        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    loadImages();
+</script>
 </body>
 </html>
