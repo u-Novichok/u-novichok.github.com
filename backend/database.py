@@ -1,6 +1,5 @@
 import os
 import requests
-import json
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -40,18 +39,14 @@ class Database:
     def fetchone(self):
         result = self._last_result.get("result", [])
         rows = result[0].get("results", []) if result else []
-        if rows:
-            # Return tuple of values in column order
-            return tuple(rows[0].get(col) for col in rows[0])
-        return None
+        # Return dict directly so callers use row["column"] not row[index]
+        return rows[0] if rows else None
 
     def fetchall(self):
         result = self._last_result.get("result", [])
         rows = result[0].get("results", []) if result else []
-        if not rows:
-            return []
-        cols = list(rows[0].keys())
-        return [tuple(row.get(c) for c in cols) for row in rows]
+        # Return list of dicts directly
+        return rows
 
     @property
     def last_row_id(self):
@@ -64,7 +59,7 @@ class Database:
         db.execute("SELECT 1 AS one")
         row = db.fetchone()
         print(f"D1 test row: {row}")
-        if row and row[0] == 1:
+        if row and row.get("one") == 1:
             print("Cloudflare D1 connection successful.")
         else:
             raise Exception("D1 connection test failed.")
