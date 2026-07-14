@@ -11,22 +11,20 @@ class CreateAdminRequest(BaseModel):
 
 @router.get("/users")
 def list_admins(admin = Depends(get_current_admin)):
-    """Return all admin users (without password hashes)."""
     db = get_db()
     rows = db.execute("SELECT id, email, role, created_at FROM admins ORDER BY created_at DESC").fetchall()
     users = []
     for row in rows:
         users.append({
-            "id": row[0],
-            "email": row[1],
-            "role": row[2] if len(row) > 2 else "admin",
-            "created_at": row[3] if len(row) > 3 else None
+            "id": row.get("id"),
+            "email": row.get("email"),
+            "role": row.get("role", "admin"),
+            "created_at": row.get("created_at"),
         })
     return users
 
 @router.post("/users")
 def create_admin(req: CreateAdminRequest, admin = Depends(get_current_admin)):
-    """Create a new admin user. Only existing admins can call this."""
     db = get_db()
     existing = db.execute("SELECT id FROM admins WHERE email = ?", (req.email,)).fetchone()
     if existing:
